@@ -3,8 +3,19 @@ import './App.css'
 import Tile from './Tile'
 import { startAuth, handleRedirect, fetchApi, getAccessToken } from './spotifyAuth'
 
-const CLIENT_ID = '<4ecdb30ce3d64922bdd2152c99afea47>' // replace with your Spotify app client id
-const REDIRECT_URI = window.location.origin + '/'
+// Put your Spotify Client ID here (no angle brackets). Example: '012345...'
+const CLIENT_ID = '4ecdb30ce3d64922bdd2152c99afea47'
+
+// Use the full origin + pathname as the redirect URI so it matches GitHub Pages project paths
+function computeRedirectUri() {
+  const origin = window.location.origin
+  const path = window.location.pathname
+  // ensure trailing slash
+  return origin + (path.endsWith('/') ? path : path + '/')
+}
+
+const REDIRECT_URI = computeRedirectUri()
+console.log('Spotify REDIRECT_URI =', REDIRECT_URI)
 const SCOPES = ['user-read-email', 'user-read-private']
 
 function App() {
@@ -42,7 +53,7 @@ function App() {
       )}
 
       <hr />
-      <Tile size={300} title="This is a very long album title that will demonstrate the scrolling behavior inside the tile and should never overflow the tile bounds" artist="Genesis" />
+      <Tile size={300} />
     </div>
   )
 }
