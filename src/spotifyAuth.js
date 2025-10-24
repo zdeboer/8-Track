@@ -43,7 +43,9 @@ export async function startAuth({ clientId, scopes = [], redirectUri }) {
   const codeVerifier = genRandomString(128)
   const codeChallenge = await sha256(codeVerifier)
 
+  // store both verifier and challenge so we can debug PKCE mismatches
   sessionStorage.setItem('spotify_code_verifier', codeVerifier)
+  sessionStorage.setItem('spotify_code_challenge', codeChallenge)
 
   const params = new URLSearchParams({
     response_type: 'code',
@@ -112,6 +114,17 @@ async function exchangeCodeForToken({ clientId, code, redirectUri }) {
   try {
     console.log('[spotifyAuth] Token endpoint response status:', res.status, 'body:', txt)
   } catch (e) {}
+
+  // DEBUG: compute and compare challenge to help diagnose invalid_verifier
+  try {
+    const computed = await sha256(verifier)
+    const storedChallenge = sessionStorage.getItem('spotify_code_challenge')
+    console.log('[spotifyAuth] computed challenge from verifier:', computed)
+    console.log('[spotifyAuth] stored challenge (from startAuth):', storedChallenge)
+    console.log('[spotifyAuth] challenge match?', computed === storedChallenge)
+  } catch (e) {
+    console.warn('[spotifyAuth] failed to compute/compare challenge', e)
+  }
 
   if (!res.ok) {
     // Surface the response body for easier debugging
