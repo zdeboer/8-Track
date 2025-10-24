@@ -32,11 +32,20 @@ async function sha256(plain) {
   return base64UrlEncode(hash)
 }
 
+// Generate a PKCE code_verifier using the unreserved characters allowed by RFC 7636
+// The verifier MUST be between 43 and 128 characters. Use a URL-safe charset.
+const PKCE_CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'
 function genRandomString(length = 64) {
+  // clamp length to RFC limits
+  if (length < 43) length = 43
+  if (length > 128) length = 128
   const array = new Uint8Array(length)
   crypto.getRandomValues(array)
-  // base64url encode the random bytes
-  return base64UrlEncode(array)
+  let out = ''
+  for (let i = 0; i < length; i++) {
+    out += PKCE_CHARSET[array[i] % PKCE_CHARSET.length]
+  }
+  return out
 }
 
 export async function startAuth({ clientId, scopes = [], redirectUri }) {
