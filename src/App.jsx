@@ -3,7 +3,7 @@ import './App.css'
 import Tile from './Tile'
 import { startAuth, handleRedirect, fetchApi, getAccessToken } from './spotifyAuth'
 
-const CLIENT_ID = '<YOUR_SPOTIFY_CLIENT_ID>' // replace with your Spotify app client id
+const CLIENT_ID = '<4ecdb30ce3d64922bdd2152c99afea47>' // replace with your Spotify app client id
 const REDIRECT_URI = window.location.origin + '/'
 const SCOPES = ['user-read-email', 'user-read-private']
 
