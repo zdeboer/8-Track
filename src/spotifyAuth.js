@@ -94,18 +94,31 @@ async function exchangeCodeForToken({ clientId, code, redirectUri }) {
     code_verifier: verifier
   })
 
+  // DEBUG: log the outgoing exchange parameters (safe for debugging while you test)
+  try {
+    console.log('[spotifyAuth] Exchanging code for token. Request body:', Object.fromEntries(body))
+  } catch (e) {
+    // ignore
+  }
+
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString()
   })
 
+  const txt = await res.text()
+  // DEBUG: log raw response text
+  try {
+    console.log('[spotifyAuth] Token endpoint response status:', res.status, 'body:', txt)
+  } catch (e) {}
+
   if (!res.ok) {
-    const txt = await res.text()
+    // Surface the response body for easier debugging
     throw new Error(`Token exchange failed: ${res.status} ${txt}`)
   }
 
-  const data = await res.json()
+  const data = JSON.parse(txt)
   saveTokens(data)
   return data
 }
