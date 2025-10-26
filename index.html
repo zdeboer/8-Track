@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-Track</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>8-Track — Spotify Web API (minimal)</h1>
+  <input id="q" placeholder="Search tracks (eg. Beatles)" value="Beatles" />
+  <button id="search">Search</button>
+  <ul id="results"></ul>
+
+  <script>
+    async function getToken() {
+      const r = await fetch('/token');
+      if (!r.ok) throw new Error('token fetch failed');
+      return r.json();
+    }
+
+    async function search(query) {
+      const { access_token } = await getToken();
+      const res = await fetch('https://api.spotify.com/v1/search?type=track&limit=5&q=' + encodeURIComponent(query), {
+        headers: { Authorization: 'Bearer ' + access_token }
+      });
+      return res.json();
+    }
+
+    document.getElementById('search').addEventListener('click', async () => {
+      const q = document.getElementById('q').value.trim();
+      const ul = document.getElementById('results');
+      ul.innerHTML = 'Loading...';
+      try {
+        const data = await search(q);
+        ul.innerHTML = '';
+        (data.tracks.items || []).forEach(t => {
+          const li = document.createElement('li');
+          li.textContent = `${t.name} — ${t.artists.map(a=>a.name).join(', ')}`;
+          ul.appendChild(li);
+        });
+        if ((data.tracks.items || []).length === 0) ul.textContent = 'No results';
+      } catch (e) {
+        ul.textContent = 'Error: ' + e.message;
+      }
+    });
+
+    document.getElementById('search').click();
+  </script>
+</body>
+</html>
