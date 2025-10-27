@@ -195,3 +195,130 @@ h1{
 .playback-right{ min-width:120px; text-align:right; font-size:12px; color:#666; }
 
 body{ padding-bottom: 92px; }
+
+@media (max-width: 600px) {
+  :root {
+    --max-width: 700px;
+    --gap: 8px;
+  }
+
+  .container {
+    padding: 12px;
+    margin: 16px auto;
+  }
+
+  h1 {
+    font-size: 1.125rem;
+  }
+
+  .search-form {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .search-input {
+    font-size: 15px;
+    padding: 10px;
+  }
+
+  .search-button {
+    width: 100%;
+    padding: 10px;
+    font-size: 15px;
+  }
+
+  .results { padding-bottom: 8px; }
+
+  .track-item {
+    gap: 12px;
+    padding: 10px 0;
+  }
+
+  .track-item img,
+  .no-image {
+    width: 48px;
+    height: 48px;
+  }
+
+  .track-title { font-size: 14px; }
+  .track-artists { font-size: 12px; }
+  .track-meta { font-size: 12px; }
+
+  /* Playback bar: stack on small screens */
+  .playback-bar {
+    height: auto;
+    padding: 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .playback-left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .playback-cover {
+    width: 56px;
+    height: 56px;
+  }
+
+  .playback-meta { font-size: 13px; }
+  .playback-title { font-size: 14px; }
+  .playback-artists { font-size: 12px; }
+
+  .playback-center {
+    order: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: stretch;
+  }
+
+  .playback-toggle {
+    width: 48px;
+    height: 36px;
+    align-self: center;
+    padding: 6px;
+    font-size: 16px;
+  }
+
+  .playback-slider {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .playback-slider .time { width: 40px; font-size: 12px; }
+
+  .playback-slider input[type="range"] {
+    height: 8px;
+    border-radius: 8px;
+  }
+
+  .playback-slider input[type="range"]::-webkit-slider-thumb {
+    width: 18px;
+    height: 18px;
+    margin-top: -5px;
+  }
+
+  .playback-right { display: none; }
+
+  /* make sure page content isn't hidden behind the bar */
+  body { padding-bottom: 140px; }
+}
+
+/* Slightly larger thumbs for touch devices */
+@media (pointer: coarse) {
+  .playback-slider input[type="range"]::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+    margin-top: -7px;
+  }
+  .playback-toggle { min-height: 40px; }
+}
