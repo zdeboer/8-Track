@@ -245,7 +245,7 @@
               aria-disabled={!canControl || !hasTrack}
               title={!canControl ? 'Player not initialized' : (!hasTrack ? 'No track loaded' : '')}
             >
-              { isPlaying ? 'Pause' : 'Play' }
+              { isPlaying ? '⏸' : '▶' }
             </button>
 
             <div className="playback-slider" aria-hidden={!hasTrack}>
