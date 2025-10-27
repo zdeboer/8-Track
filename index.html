@@ -185,26 +185,28 @@
 
     function PlaybackBar({ player, playbackState }) {
       const [scrubMs, setScrubMs] = useState(null);
-      if (!playbackState || playbackState.paused) return null; // only show when playing
 
-      const track = playbackState.track_window?.current_track;
-      if (!track) return null;
-
-      const duration = track.duration_ms || 0;
-      const position = scrubMs !== null ? Number(scrubMs) : (playbackState.position || 0);
+      const track = playbackState?.track_window?.current_track || null;
+      const isPlaying = Boolean(playbackState && !playbackState.paused);
+      const duration = track?.duration_ms || 0;
+      const position = scrubMs !== null ? Number(scrubMs) : (playbackState?.position || 0);
 
       const msToMin = ms => {
-        const s = Math.floor(ms / 1000);
+        const s = Math.floor((ms || 0) / 1000);
         return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
       };
+
+      const canControl = Boolean(player); // controls enabled only if player exists
+      const hasTrack = Boolean(track);
 
       async function togglePlay() {
         if (!player) return;
         try {
-          if (playbackState.paused) {
-            await player.resume();
-          } else {
+          // prefer Web Playback SDK methods
+          if (isPlaying) {
             await player.pause();
+          } else {
+            await player.resume();
           }
         } catch (e) {
           console.error('play/pause error', e);
@@ -220,37 +222,53 @@
         }
       }
 
+      // Always render the bar; show placeholders / disable controls when no playback
       return (
-        <div className="playback-bar">
+        <div className="playback-bar" role="region" aria-label="Playback bar">
           <div className="playback-left">
-            <img src={track.album.images?.[2]?.url || track.album.images?.[0]?.url || ''} alt="" className="playback-cover" />
+            <img
+              src={ track?.album?.images?.[2]?.url || track?.album?.images?.[0]?.url || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' }
+              alt={track ? `${track.name} album art` : 'No album art'}
+              className="playback-cover"
+            />
             <div className="playback-meta">
-              <div className="playback-title">{track.name}</div>
-              <div className="playback-artists">{track.artists.map(a => a.name).join(', ')}</div>
+              <div className="playback-title">{ track ? track.name : 'Not playing' }</div>
+              <div className="playback-artists">{ track ? track.artists.map(a => a.name).join(', ') : '—' }</div>
             </div>
           </div>
 
           <div className="playback-center">
-            <button className="playback-toggle" onClick={togglePlay}>
-              {playbackState.paused ? 'Play' : 'Pause'}
+            <button
+              className="playback-toggle"
+              onClick={togglePlay}
+              disabled={!canControl || !hasTrack}
+              aria-disabled={!canControl || !hasTrack}
+              title={!canControl ? 'Player not initialized' : (!hasTrack ? 'No track loaded' : '')}
+            >
+              { isPlaying ? 'Pause' : 'Play' }
             </button>
-            <div className="playback-slider">
-              <span className="time">{msToMin(position)}</span>
+
+            <div className="playback-slider" aria-hidden={!hasTrack}>
+              <span className="time">{ msToMin(position) }</span>
               <input
                 type="range"
                 min="0"
                 max={duration}
-                value={position}
+                value={ Math.min(Math.max(position, 0), duration) }
                 onChange={e => setScrubMs(e.target.value)}
-                onMouseUp={e => { seekTo(e.target.value); setScrubMs(null); }}
-                onTouchEnd={e => { /* touch devices */ seekTo(e.target.value); setScrubMs(null); }}
+                onMouseUp={e => { if (hasTrack) { seekTo(e.target.value); setScrubMs(null); } }}
+                onTouchEnd={e => { if (hasTrack) { seekTo(e.target.value); setScrubMs(null); } }}
+                disabled={!hasTrack || !canControl}
+                aria-valuemin={0}
+                aria-valuemax={duration}
+                aria-valuenow={position}
               />
-              <span className="time">{msToMin(duration)}</span>
+              <span className="time">{ msToMin(duration) }</span>
             </div>
           </div>
 
           <div className="playback-right">
-            <div className="device-id">Device: {playbackState && playbackState.device_id ? playbackState.device_id : '—'}</div>
+            <div className="device-id">{ playbackState?.device_id ? `Device: ${playbackState.device_id}` : 'No device' }</div>
           </div>
         </div>
       );
