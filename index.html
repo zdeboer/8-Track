@@ -1,62 +1,356 @@
+<!-- ...existing code... -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>8-Track</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>8-Track — Playback SDK</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>8-Track — Spotify Web API (minimal)</h1>
-  <input id="q" placeholder="Search tracks (eg. Beatles)" value="Beatles" />
-  <button id="search">Search</button>
-  <ul id="results"></ul>
+  <div id="root"></div>
 
-<script>
-  // Set to your remote backend (no trailing slash), or '' to use same origin:
-  const BACKEND_ORIGIN = 'http://localhost:3000'; // <-- change this
+  <!-- React + Babel (dev) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  function tokenUrl() {
-    const base = BACKEND_ORIGIN ? BACKEND_ORIGIN.replace(/\/$/, '') : '';
-    return base + '/token';
-  }
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-  async function getToken() {
-    const r = await fetch(tokenUrl());
-    if (!r.ok) {
-      const txt = await r.text().catch(() => null);
-      throw new Error('token fetch failed: ' + (txt || r.status));
+    // REQUIRED: set this to your Spotify App client id and redirect uri (must be registered in dashboard)
+    const CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
+    const REDIRECT_URI = window.location.origin + window.location.pathname; // keep same page
+
+    // Scopes required for Playback SDK
+    const SCOPES = [
+      'streaming',
+      'user-read-playback-state',
+      'user-modify-playback-state',
+      'user-read-email',
+      'user-read-private'
+    ].join(' ');
+
+    // --- PKCE helpers ---
+    function base64UrlEncode(buffer) {
+      return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
-    return r.json();
-  }
+    async function sha256(text) {
+      const msgUint8 = new TextEncoder().encode(text);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+      return hashBuffer;
+    }
+    async function createCodeChallenge(verifier) {
+      const hashed = await sha256(verifier);
+      return base64UrlEncode(hashed);
+    }
+    function randomString(length = 128) {
+      const array = new Uint8Array(length);
+      crypto.getRandomValues(array);
+      // map to URL safe chars
+      return Array.from(array).map(v => ('0' + (v % 36).toString(36)).slice(-1)).join('');
+    }
 
-  async function search(query) {
-    const { access_token } = await getToken();
-    const res = await fetch('https://api.spotify.com/v1/search?type=track&limit=5&q=' + encodeURIComponent(query), {
-      headers: { Authorization: 'Bearer ' + access_token }
-    });
-    return res.json();
-  }
+    // --- Auth flow (PKCE) ---
+    function saveItem(k, v) { localStorage.setItem(k, v); }
+    function readItem(k) { return localStorage.getItem(k); }
+    function clearAuth() {
+      ['sp_access_token','sp_refresh_token','sp_token_ts','sp_expires_in','sp_code_verifier'].forEach(k => localStorage.removeItem(k));
+    }
 
-  document.getElementById('search').addEventListener('click', async () => {
-    const q = document.getElementById('q').value.trim();
-    const ul = document.getElementById('results');
-    ul.innerHTML = 'Loading...';
-    try {
-      const data = await search(q);
-      ul.innerHTML = '';
-      (data.tracks.items || []).forEach(t => {
-        const li = document.createElement('li');
-        li.textContent = `${t.name} — ${t.artists.map(a=>a.name).join(', ')}`;
-        ul.appendChild(li);
+    async function startAuth() {
+      const verifier = randomString(64);
+      const challenge = await createCodeChallenge(verifier);
+      saveItem('sp_code_verifier', verifier);
+      const params = new URLSearchParams({
+        client_id: CLIENT_ID,
+        response_type: 'code',
+        redirect_uri: REDIRECT_URI,
+        code_challenge_method: 'S256',
+        code_challenge: challenge,
+        scope: SCOPES,
+        show_dialog: 'true'
       });
-      if ((data.tracks.items || []).length === 0) ul.textContent = 'No results';
-    } catch (e) {
-      ul.textContent = 'Error: ' + e.message;
+      window.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
     }
-  });
 
-  document.getElementById('search').click();
-</script>
+    async function exchangeCodeForToken(code) {
+      const verifier = readItem('sp_code_verifier');
+      if (!verifier) throw new Error('Missing PKCE code verifier');
+      const body = new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: REDIRECT_URI,
+        client_id: CLIENT_ID,
+        code_verifier: verifier
+      });
+      const res = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+      if (!res.ok) {
+        const t = await res.text().catch(()=>null);
+        throw new Error('Token exchange failed: ' + (t || res.status));
+      }
+      const data = await res.json();
+      // store tokens
+      saveItem('sp_access_token', data.access_token);
+      if (data.refresh_token) saveItem('sp_refresh_token', data.refresh_token);
+      saveItem('sp_expires_in', String(data.expires_in));
+      saveItem('sp_token_ts', String(Date.now()));
+      // remove code query param from URL
+      history.replaceState({}, '', REDIRECT_URI);
+      return data;
+    }
+
+    async function refreshAccessToken() {
+      const refreshToken = readItem('sp_refresh_token');
+      if (!refreshToken) throw new Error('No refresh token');
+      const body = new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: CLIENT_ID
+      });
+      const res = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+      if (!res.ok) {
+        throw new Error('Refresh failed');
+      }
+      const data = await res.json();
+      if (data.access_token) saveItem('sp_access_token', data.access_token);
+      if (data.expires_in) saveItem('sp_expires_in', String(data.expires_in));
+      saveItem('sp_token_ts', String(Date.now()));
+      return data;
+    }
+
+    function getStoredAccessToken() {
+      return readItem('sp_access_token');
+    }
+
+    async function ensureAccessToken() {
+      const token = getStoredAccessToken();
+      if (!token) throw new Error('Not authenticated');
+      const ts = Number(readItem('sp_token_ts') || 0);
+      const expiresIn = Number(readItem('sp_expires_in') || 0);
+      if (Date.now() - ts > (expiresIn - 60) * 1000) {
+        // refresh
+        await refreshAccessToken();
+      }
+      return getStoredAccessToken();
+    }
+
+    // --- Spotify Playback SDK setup ---
+    function loadSpotifySDK() {
+      return new Promise(resolve => {
+        if (window.Spotify) return resolve();
+        const s = document.createElement('script');
+        s.src = 'https://sdk.scdn.co/spotify-player.js';
+        s.onload = () => resolve();
+        document.body.appendChild(s);
+      });
+    }
+
+    // --- React app ---
+    function TrackItem({ track, onPlay }) {
+      const artists = track.artists.map(a => a.name).join(', ');
+      const img = track.album.images && track.album.images[2] ? track.album.images[2].url : (track.album.images && track.album.images[0] ? track.album.images[0].url : '');
+      const msToMin = ms => {
+        const s = Math.floor(ms/1000);
+        return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+      };
+
+      return (
+        <li className="track-item">
+          {img ? <img src={img} alt="" /> : <div className="no-image" />}
+          <div className="track-info">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <div className="track-title">{track.name}</div>
+                <div className="track-artists">{artists}</div>
+                <div className="track-meta">Album: {track.album.name} · {msToMin(track.duration_ms)}</div>
+              </div>
+              <div>
+                <button onClick={() => onPlay(track.uri)} style={{padding:'6px 10px'}}>Play</button>
+              </div>
+            </div>
+          </div>
+        </li>
+      );
+    }
+
+    function App() {
+      const [query, setQuery] = useState('Beatles');
+      const [results, setResults] = useState([]);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
+      const [isAuthenticated, setIsAuthenticated] = useState(Boolean(getStoredAccessToken()));
+      const [deviceId, setDeviceId] = useState(null);
+      const playerRef = useRef(null);
+
+      // on mount: handle auth callback (code) and init player if token present
+      useEffect(() => {
+        (async () => {
+          try {
+            // if redirected back with code
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            if (code && !getStoredAccessToken()) {
+              await exchangeCodeForToken(code);
+              setIsAuthenticated(true);
+            }
+          } catch (err) {
+            console.error(err);
+            setError(String(err));
+          }
+
+          if (getStoredAccessToken()) {
+            try {
+              await initPlayer();
+            } catch (err) {
+              console.warn('player init error', err);
+            }
+          }
+
+          // initial search
+          doSearch(query);
+        })();
+
+        // cleanup on unload
+        return () => {
+          if (playerRef.current && playerRef.current.disconnect) playerRef.current.disconnect();
+        };
+      }, []);
+
+      async function initPlayer() {
+        await loadSpotifySDK();
+        const token = await ensureAccessToken();
+        const player = new window.Spotify.Player({
+          name: '8-Track Web Player',
+          getOAuthToken: cb => cb(token),
+          volume: 0.8
+        });
+        playerRef.current = player;
+
+        player.addListener('initialization_error', ({ message }) => console.error(message));
+        player.addListener('authentication_error', ({ message }) => {
+          console.error('auth error', message); clearAuth(); setIsAuthenticated(false);
+        });
+        player.addListener('account_error', ({ message }) => console.error(message));
+        player.addListener('playback_error', ({ message }) => console.error(message));
+
+        player.addListener('ready', ({ device_id }) => {
+          console.log('Ready with Device ID', device_id);
+          setDeviceId(device_id);
+        });
+
+        player.addListener('not_ready', ({ device_id }) => {
+          console.log('Device ID has gone offline', device_id);
+          setDeviceId(null);
+        });
+
+        player.addListener('player_state_changed', state => {
+          // optional: update UI
+          // console.log('player state', state);
+        });
+
+        await player.connect();
+      }
+
+      async function playOnDevice(uri) {
+        try {
+          const token = await ensureAccessToken();
+          if (!deviceId) {
+            throw new Error('No device available. Make sure the Spotify app is open on a device or wait for the Web Playback SDK device to appear in your Spotify app.');
+          }
+          const res = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            headers: {
+              Authorization: 'Bearer ' + token,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ uris: [uri] })
+          });
+          if (res.status === 204) return;
+          if (!res.ok) {
+            const t = await res.text().catch(()=>null);
+            throw new Error('Playback start failed: ' + (t || res.status));
+          }
+        } catch (err) {
+          setError(String(err));
+        }
+      }
+
+      async function doSearch(q) {
+        if (!q) { setResults([]); return; }
+        setLoading(true); setError(null);
+        try {
+          const token = await ensureAccessToken();
+          const res = await fetch('https://api.spotify.com/v1/search?type=track&limit=20&q=' + encodeURIComponent(q), {
+            headers: { Authorization: 'Bearer ' + token }
+          });
+          if (!res.ok) {
+            const t = await res.text().catch(()=>null);
+            throw new Error('Spotify search failed: ' + (t || res.status));
+          }
+          const data = await res.json();
+          setResults((data.tracks && data.tracks.items) || []);
+        } catch (err) {
+          setError(String(err));
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      function onConnectClick() {
+        startAuth();
+      }
+      function onLogout() {
+        clearAuth();
+        setIsAuthenticated(false);
+        setDeviceId(null);
+        if (playerRef.current && playerRef.current.disconnect) playerRef.current.disconnect();
+        playerRef.current = null;
+      }
+
+      function onSubmit(e) { e && e.preventDefault(); doSearch(query.trim()); }
+
+      return (
+        <main className="container">
+          <h1>8-Track — Playback SDK</h1>
+
+          <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:12}}>
+            {!isAuthenticated ? (
+              <button onClick={onConnectClick} className="search-button">Connect Spotify (PKCE)</button>
+            ) : (
+              <>
+                <div style={{fontSize:14}}>Connected</div>
+                <button onClick={onLogout} style={{marginLeft:8}}>Logout</button>
+                <div style={{marginLeft:'auto'}}>{deviceId ? <span>Device: {deviceId}</span> : <span>Waiting for device...</span>}</div>
+              </>
+            )}
+          </div>
+
+          <form onSubmit={onSubmit} className="search-form">
+            <input className="search-input" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search tracks (eg. Beatles)" />
+            <button className="search-button" type="submit" disabled={!isAuthenticated}>Search</button>
+          </form>
+
+          {loading && <div className="loading">Loading…</div>}
+          {error && <div className="error">Error: {error}</div>}
+
+          <ul className="results">
+            {results.map(track => <TrackItem key={track.id} track={track} onPlay={uri => playOnDevice(uri)} />)}
+          </ul>
+        </main>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
 </body>
 </html>
