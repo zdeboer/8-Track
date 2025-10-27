@@ -183,8 +183,81 @@
       );
     }
 
+    function PlaybackBar({ player, playbackState }) {
+      const [scrubMs, setScrubMs] = useState(null);
+      if (!playbackState || playbackState.paused) return null; // only show when playing
+
+      const track = playbackState.track_window?.current_track;
+      if (!track) return null;
+
+      const duration = track.duration_ms || 0;
+      const position = scrubMs !== null ? Number(scrubMs) : (playbackState.position || 0);
+
+      const msToMin = ms => {
+        const s = Math.floor(ms / 1000);
+        return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+      };
+
+      async function togglePlay() {
+        if (!player) return;
+        try {
+          if (playbackState.paused) {
+            await player.resume();
+          } else {
+            await player.pause();
+          }
+        } catch (e) {
+          console.error('play/pause error', e);
+        }
+      }
+
+      async function seekTo(ms) {
+        if (!player) return;
+        try {
+          await player.seek(Number(ms));
+        } catch (e) {
+          console.error('seek error', e);
+        }
+      }
+
+      return (
+        <div className="playback-bar">
+          <div className="playback-left">
+            <img src={track.album.images?.[2]?.url || track.album.images?.[0]?.url || ''} alt="" className="playback-cover" />
+            <div className="playback-meta">
+              <div className="playback-title">{track.name}</div>
+              <div className="playback-artists">{track.artists.map(a => a.name).join(', ')}</div>
+            </div>
+          </div>
+
+          <div className="playback-center">
+            <button className="playback-toggle" onClick={togglePlay}>
+              {playbackState.paused ? 'Play' : 'Pause'}
+            </button>
+            <div className="playback-slider">
+              <span className="time">{msToMin(position)}</span>
+              <input
+                type="range"
+                min="0"
+                max={duration}
+                value={position}
+                onChange={e => setScrubMs(e.target.value)}
+                onMouseUp={e => { seekTo(e.target.value); setScrubMs(null); }}
+                onTouchEnd={e => { /* touch devices */ seekTo(e.target.value); setScrubMs(null); }}
+              />
+              <span className="time">{msToMin(duration)}</span>
+            </div>
+          </div>
+
+          <div className="playback-right">
+            <div className="device-id">Device: {playbackState && playbackState.device_id ? playbackState.device_id : '—'}</div>
+          </div>
+        </div>
+      );
+    }
+
     function App() {
-      const [query, setQuery] = useState('Beatles');
+      const [query, setQuery] = useState('');
       const [results, setResults] = useState([]);
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState(null);
@@ -254,9 +327,16 @@
         });
 
         player.addListener('player_state_changed', state => {
-          // optional: update UI
-          // console.log('player state', state);
+          if (!state) return;
+          setPlaybackState(state);
         });
+
+        try {
+          const state = await player.getCurrentState();
+          if (state) setPlaybackState(state);
+        } catch (e) {
+          console.warn('getCurrentState failed', e);
+        }
 
         await player.connect();
       }
@@ -321,34 +401,51 @@
 
       return (
         <main className="container">
-          <h1>8-Track — Playback SDK</h1>
+        <h1>8-Track — Playback SDK</h1>
 
-          <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:12}}>
-            {!isAuthenticated ? (
-              <button onClick={onConnectClick} className="search-button">Connect Spotify (PKCE)</button>
-            ) : (
-              <>
-                <div style={{fontSize:14}}>Connected</div>
-                <button onClick={onLogout} style={{marginLeft:8}}>Logout</button>
-                <div style={{marginLeft:'auto'}}>{deviceId ? <span>Device: {deviceId}</span> : <span>Waiting for device...</span>}</div>
-              </>
-            )}
-          </div>
+        <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:12}}>
+          {!isAuthenticated ? (
+            <button onClick={() => startAuth()} className="search-button">Connect Spotify (PKCE)</button>
+          ) : (
+            <>
+              <div style={{fontSize:14}}>Connected</div>
+              <button onClick={() => { clearAuth(); setIsAuthenticated(false); setDeviceId(null); if (playerRef.current) playerRef.current.disconnect(); playerRef.current = null; }} style={{marginLeft:8}}>Logout</button>
+              <div style={{marginLeft:'auto'}}>{deviceId ? <span>Device: {deviceId}</span> : <span>Waiting for device...</span>}</div>
+            </>
+          )}
+        </div>
 
-          <form onSubmit={onSubmit} className="search-form">
-            <input className="search-input" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search tracks (eg. Beatles)" />
-            <button className="search-button" type="submit" disabled={!isAuthenticated}>Search</button>
-          </form>
+        <form onSubmit={e => { e.preventDefault(); doSearch(query.trim()); }} className="search-form">
+          <input className="search-input" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search tracks (eg. Beatles)" />
+          <button className="search-button" type="submit" disabled={!isAuthenticated}>Search</button>
+        </form>
 
-          {loading && <div className="loading">Loading…</div>}
-          {error && <div className="error">Error: {error}</div>}
+        {loading && <div className="loading">Loading…</div>}
+        {error && <div className="error">Error: {error}</div>}
 
-          <ul className="results">
-            {results.map(track => <TrackItem key={track.id} track={track} onPlay={uri => playOnDevice(uri)} />)}
-          </ul>
-        </main>
-      );
-    }
+        <ul className="results">
+          {results.map(track => <TrackItem key={track.id} track={track} onPlay={uri => {
+            // if using Web Playback SDK, prefer playerRef control; else use API
+            if (playerRef.current && deviceId) {
+              // start playback on device via Web API
+              ensureAccessToken().then(token => {
+                fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                  method: 'PUT',
+                  headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ uris: [uri] })
+                }).catch(e => setError(String(e)));
+              }).catch(e => setError(String(e)));
+            } else {
+              setError('No active device. Open the Spotify app or connect the web player.');
+            }
+          }} />)}
+        </ul>
+
+        {/* Playback bar component — receives player instance and current playback state */}
+        <PlaybackBar player={playerRef.current} playbackState={playbackState} />
+      </main>
+    );
+  }
 
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
