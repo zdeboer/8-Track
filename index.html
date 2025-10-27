@@ -263,6 +263,7 @@
       const [error, setError] = useState(null);
       const [isAuthenticated, setIsAuthenticated] = useState(Boolean(getStoredAccessToken()));
       const [deviceId, setDeviceId] = useState(null);
+      const [playbackState, setPlaybackState] = useState(null);
       const playerRef = useRef(null);
 
       // on mount: handle auth callback (code) and init player if token present
