@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         } else {
             // Invalid username or password
-            echo "Invalid username or password. <a href='login.html'>Go back to login</a>";
+            echo "Invalid username or password. <a href='index.html'>Go back to login</a>";
         }
     } catch (PDOException $e) {
         echo "Error: " . $e->getMessage();

@@ -5,7 +5,7 @@ session_start();
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.html");
+    header("Location: index.html");
     exit();
 }
 
@@ -15,13 +15,9 @@ $statement = $pdo->prepare($query);
 $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
 $statement->bindValue('id', $id, PDO::PARAM_INT);
 
-
-
 $statement->execute();
 
 $row = $statement->fetch();
-
-
 ?>
 
 <!DOCTYPE html>
@@ -43,7 +39,6 @@ $row = $statement->fetch();
     $query = "SELECT * FROM playlist_tracks WHERE playlist_id = :id";
     $statement = $pdo->prepare($query);
     $statement->bindValue('id', $id, PDO::PARAM_INT);
-
 
     $statement->execute();
 

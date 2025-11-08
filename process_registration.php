@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // 3. Execute the statement with user data
         $stmt->execute([$username, $email, $hashed_password]);
 
-        echo "Registration successful! You can now <a href='login.html'>log in</a>.";
+        echo "Registration successful! You can now <a href='index.html'>log in</a>.";
 
     } catch (PDOException $e) {
         // Handle potential errors, such as duplicate username/email
