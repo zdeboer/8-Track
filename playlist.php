@@ -45,16 +45,16 @@ $row = $statement->fetch();
     if($statement->rowCount() > 0): ?>
         <ul>
         <?php while($row = $statement->fetch()): ?>
-            <li class="playlist">
-                <p class="playlist-title"><?= $row['title'] ?></p>
+            <li class="track">
+                <p class="track-title"><?= $row['title'] ?></p>
                 <p><?=$row['artist']?></p>
-                <p class="playlist-content"><?=$row['spotify_track_id']?></p>
-                <p class="playlist-timestamp"><?= date("M d y", strtotime($row['added_at'])) ?></p>
+                <p class="track-id"><?=$row['spotify_track_id']?></p>
+                <p class="track-timestamp"><?= date("M d y", strtotime($row['added_at'])) ?></p>
             </li>
         <?php endwhile ?>
         </ul>
     <?php else: ?>
-        <p>No playlists.</p>
+        <p>No songs.</p>
     <?php endif ?>
 
 
