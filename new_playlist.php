@@ -45,7 +45,7 @@ if ($_POST && !empty($_POST['name']) && !empty($_POST['description'])) {
     <input type="text" id="name" name="name">
     <label for="description">Description:</label>
     <input type="text" id="description" name="description">
-    <input type="submit">Create</button>
+    <input type="submit" value="Create"></button>
   </form>
   <?php if (isset($posted) && $posted == true) {
     header("Location: dashboard.php");

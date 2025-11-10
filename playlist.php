@@ -31,6 +31,8 @@ $row = $statement->fetch();
     <p>You have successfully logged in as: <?=$_SESSION['role']?></p>
     <a href="logout.php">Logout</a>
 
+    <a href="dashboard.php">Back</a>
+
     <h2><?=$row['name']?></h2>
     <p><?=$row['description']?></p>
 
@@ -56,7 +58,5 @@ $row = $statement->fetch();
     <?php else: ?>
         <p>No songs.</p>
     <?php endif ?>
-
-
 </body>
 </html>

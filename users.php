@@ -9,15 +9,13 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-
-
 if (isset($_POST['filter'])) {
     $filter = $_POST['filter'];
 } else {
-    $filter = "updated_at DESC";
+    $filter = "joined_at DESC";
 }
 
-$query = "SELECT * FROM playlists WHERE user_id = $_SESSION[user_id] ORDER BY $filter LIMIT 20";
+$query = "SELECT * FROM users ORDER BY $filter LIMIT 20";
 
 $statement = $pdo->prepare($query);
 
@@ -31,24 +29,21 @@ $statement->execute();
     <title>Home Page</title>
 </head>
 <body>
-    <h2>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
-    <p>You have successfully logged in as: <?=$_SESSION['role']?></p>
+    <h2>User Admin Page</h2>
+    <p>logged in as: <?=$_SESSION['role']?></p>
     <a href="logout.php">Logout</a>
-    <?php if($_SESSION['role'] == 'admin') :?>
-        <a href="users.php">User Admin Page</a>
-    <?php endif ?>    
+
+    <a href="dashboard.php">Back</a>
     <br>
 
-    <a href="new_playlist.php">Create playlist</a>
-
-    <form action="dashboard.php" method="post">
+    <form action="users.php" method="post">
         <?php
         $selected_value = $_POST['filter'] ?? '';
 
         $options = [
-            'updated_at DESC' => 'Recent',
-            'name ASC' => 'A-Z',
-            'name DESC' => 'Z-A'
+            'joined_at DESC' => 'Recent',
+            'username ASC' => 'A-Z',
+            'username DESC' => 'Z-A'
         ];
         ?>
 
@@ -66,15 +61,16 @@ $statement->execute();
     <?php if($statement->rowCount() > 0): ?>
         <ul>
         <?php while($row = $statement->fetch()): ?>
-            <li class="playlist">
-                <p class="playlist-title"><a href="playlist.php?id=<?=$row['id']?>"><?= $row['name'] ?></a></p>
-                <p class="playlist-content"><?=$row['description']?></p>
-                <p class="playlist-timestamp"><?= date("M d y", strtotime($row['created_at'])) ?></p>
+            <li class="user">
+                <p class="username"><a href="user.php?id=<?=$row['id']?>"><?= $row['username'] ?></a></p>
+                <p class="user-email"><?=$row['email']?></p>
+                <p><?= $row['role'] ?></p>
+                <p class="user-date-joined"><?= date("M d y", strtotime($row['joined_at'])) ?></p>
             </li>
         <?php endwhile ?>
         </ul>
     <?php else: ?>
-        <p>No playlists.</p>
+        <p>No users on platform.</p>
     <?php endif ?>
 
 
