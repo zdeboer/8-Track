@@ -3,101 +3,132 @@
     src: url("fonts/SF-Pro-Display-Regular.ttf") format("truetype");
 }
 
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
 body {
     font-family: "SF-Pro";
+    background-color: #1f1f1f;
+    color: white;
 }
 
 header {
-    margin-left: 15px;
-    border-bottom: 1px solid grey;
-    margin-bottom: 30px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0F2027;
+    background: -webkit-linear-gradient(to right, #2C5364, #203A43, #0F2027);
+    background: linear-gradient(to right, #2C5364, #203A43, #0F2027);
+    color: #f2eadd;
+    border-radius: 0 0 16px 16px;
 }
 
-a {
-    font-size: 0.8em;
-}
-
-.nav {
-    width: 60vw;
-    margin: 0 auto;
-}
-
-.nav-button {
-    padding: 12px;
-    background-color: rgb(0, 157, 255);
-    color: white;
-    border: none;
-    border-radius: 25px;
-    box-shadow: 2px 2px 15px rgb(145, 145, 145);
-    margin-right: 7px;
+.header-nav a,
+.create-playlist,
+#filter-button,
+.delete-button {
+    display: inline-block;
+    background-color:#ecd1a5;
+    padding: 8px;
+    border-radius: 16px;
     text-decoration: none;
+    color: black;
     font-weight: bold;
-    font-size: 0.9em;
-    padding-left: 17px;
-    padding-right: 17px;
+    font-size: 1.05em;
+    margin-right: 8px;
+    transition: transform 0.07s ease-in-out, background-color 0.07s ease-in-out;
 }
 
-.nav-button:hover {
-    box-shadow: 2px 2px 15px black;
+.header-nav a:hover, 
+.create-playlist:hover,
+#filter-button:hover,
+.delete-button:hover {
+    transform: scale(1.02);
+    background-color:#ecd6b1;
+    cursor: pointer;
 }
 
-.post {
-    list-style-type: none;
-    width: 60vw;
-    margin: 0 auto;
-    margin-top: 20px;
-    box-shadow: 3px 3px 12px grey;
-    padding: 15px;
-    border-radius: 15px;
-    position: relative;
-
+main {
+    margin: 24px;
+    margin-bottom: 0;
+    height: 88vh;
 }
 
-.post-title {
-    font-size: 1.5em;
-    margin: 0;
-    border-bottom: 1px solid rgb(197, 197, 197);
+main h2 {
+    font-size: 1.8em;
 }
 
-.post-content {
-    padding-bottom: 15px;
+.create-playlist {
+    margin-top: 10px;
 }
 
-.edit-link {
-    margin-right: 5px;
-}
-
-.post-timestamp {
-    position: absolute;
-    bottom: 10px;
-    right: 13px;
-    margin: 0;
-    font-size: 0.9em;
-    color: rgb(73, 73, 73);
-}
-
-label {
-    font-size: 1.5em;
-}
- 
-#title, #content {
+.create-playlist, #filter-button,
+.delete-button {
+    font-size: 0.95em;
+    padding: 6px 8px 6px 8px;
     border: none;
-    box-shadow: 2px 2px 15px grey;
-    font-size: 1em;
-    padding: 7px;
-    border-radius: 15px;
-    display: block;
-    margin-top: 15px;
+}
+
+main form, ul {
+    margin: 18px;
+}
+
+form select {
+    appearance: none;
+    color: white;
+    background-color: #0f0f0f;
+    border: none;
+    border-radius: 16px;
+    padding: 8px;
+    font-size: 1.07em;
+    text-align: center;
+}
+
+ul {
+    padding: 32px;
+    margin-bottom: 0;
+    background-color: #0f0f0f;
+    min-height: 70%;
+    border-radius: 16px;
+    list-style: none;
+}
+
+.playlist, 
+.user {
     margin-bottom: 15px;
 }
 
-#content {
-    min-width: 58vw;
-    max-width: 58vw;
-    field-sizing: content;
-    resize: none;
+.playlist-title a,
+.username a{
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    font-size: 1.3em;
 }
 
-.content-label {
-    padding-top: 15px;
+.playlist-title,
+.username {
+    margin-bottom: 2px;
+}
+
+.playlist-title a:hover,
+.username:hover {
+    text-decoration: underline;
+}
+
+.playlist-content,
+.playlist-timestamp,
+.user-email,
+.user-role,
+.user-date-joined {
+    font-size: 1em;
+    color: rgb(175, 175, 175);
 }

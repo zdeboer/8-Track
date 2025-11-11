@@ -3,7 +3,7 @@
 require 'connect.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
+    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'];
     $retype_password = $_POST['retype-password'];

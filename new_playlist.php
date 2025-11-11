@@ -31,7 +31,8 @@ if ($_POST && !empty($_POST['name']) && !empty($_POST['description'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home Page</title>
+    <title>Create Playlist</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h2>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>

@@ -9,8 +9,6 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-
-
 $query = "SELECT * FROM playlists WHERE id = :id";
 $statement = $pdo->prepare($query);
 
@@ -34,11 +32,12 @@ if (isset($_POST['delete'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home Page</title>
+    <title>User Admin Page</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <h2>User Admin Page</h2>
-    <p>logged in as: <?=$_SESSION['role']?></p>
+    <p>Logged in as: <?=$_SESSION['role']?></p>
     <a href="logout.php">Logout</a>
 
     <a href="users.php">Back</a>
@@ -57,7 +56,7 @@ if (isset($_POST['delete'])) {
           <p class="user-email">Email: <?=$row['email']?></p>
           <p>Role: <?= $row['role'] ?></p>
           <p class="user-date-joined">Joined: <?= date("M d y", strtotime($row['joined_at'])) ?></p>
-          <form method="post"><input type="submit" value="delete" name="delete"></form>
+          <form method="post"><input type="submit" value="Delete" name="delete"></form>
       </div>
     <?php else: ?>
       <p>User not found.</p>
