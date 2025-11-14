@@ -34,6 +34,7 @@ if (isset($_POST['delete'])) {
     <meta charset="UTF-8">
     <title>Home Page</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="images/8.svg.svg">
 </head>
 <body>
     <header>
@@ -42,20 +43,15 @@ if (isset($_POST['delete'])) {
             <p>You have successfully logged in as: <strong><?=$_SESSION['role']?></strong></p>
         </div>
         <div class="header-nav">
-            <?php if($_SESSION['role'] == 'admin') :?>
-            <a href="users.php">User Admin Page</a>
-            <?php endif ?>
+            <a href="dashboard.php">Back</a>
             <a href="logout.php">Logout</a>  
         </div>
     </header>
     <main>
-        <a href="dashboard.php">Back</a>
-
         <h2><?=$row['name']?></h2>
         <p><?=$row['description']?></p>
 
         <?php
-        
         $query = "SELECT * FROM playlist_tracks WHERE playlist_id = :id";
         $statement = $pdo->prepare($query);
         $statement->bindValue('id', $id, PDO::PARAM_INT);
@@ -66,20 +62,27 @@ if (isset($_POST['delete'])) {
             <ul>
             <?php while($row = $statement->fetch()): ?>
                 <li class="track">
-                    <p class="track-title"><?= $row['title'] ?></p>
-                    <p><?=$row['artist']?></p>
-                    <p class="track-id"><?=$row['spotify_track_id']?></p>
-                    <p class="track-timestamp"><?= date("M d y", strtotime($row['added_at'])) ?></p>
+                    <div class="img-container">
+                        <img src="images/sebtp.jpg">
+                    </div>
+                    <div class="track-info">
+                        <p class="track-title"><?= $row['title'] ?></p>
+                        <p class="artist"><?=$row['artist']?></p>
+                        <p class="track-timestamp"><?= date("M d y", strtotime($row['added_at'])) ?></p>
+                    </div>
                 </li>
             <?php endwhile ?>
             </ul>
-            
         <?php else: ?>
             <ul>
                 <p>No songs.</p>
             </ul>
         <?php endif ?>
         <form method="post"><input class="delete-button" type="submit" value="Delete Playlist" name="delete"></form>
+        <form method="post" action="process_comment.php">
+            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
+            <input type="submit" class="button">
+        </form>
     </main> 
 </body>
 </html>

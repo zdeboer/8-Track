@@ -27,7 +27,11 @@ $statement->execute();
 <head>
     <meta charset="UTF-8">
     <title>User Admin Page</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/header.css">
+    <link rel="stylesheet" href="styles/buttons.css">
+    <link rel="stylesheet" href="styles/lists.css">
+    <link rel="icon" type="image/x-icon" href="images/8.svg.svg">
 </head>
 <body>
     <header>
@@ -36,8 +40,8 @@ $statement->execute();
             <p>Logged in as: <strong><?=$_SESSION['role']?></strong></p>
         </div>
         <div class="header-nav">
-            <a href="dashboard.php">Back</a>
-            <a href="logout.php">Logout</a>  
+            <a class="button" href="dashboard.php">Back</a>
+            <a class="button" href="logout.php">Logout</a>  
         </div>
     </header>
     <main>
@@ -60,8 +64,11 @@ $statement->execute();
                     </option>
                 <?php endforeach; ?>
             </select>
-            <input type="submit" value="Filter" id="filter-button">
+            <input class="button" type="submit" value="Filter" id="filter-button">
+            <a style="float:right" href="comments.php" class="button">Comments</a>
         </form>
+
+        
 
         <?php if($statement->rowCount() > 0): ?>
             <ul>
@@ -76,7 +83,11 @@ $statement->execute();
             </ul>
         <?php else: ?>
             <p>No users on platform.</p>
-        <?php endif ?>        
+        <?php endif ?>  
+        <form method="post" action="process_comment.php">
+            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
+            <input type="submit" class="button">
+        </form>      
     </main>
 </body>
 </html>

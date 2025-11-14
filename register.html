@@ -3,24 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <title>Create Account</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/forms.css">
+    <link rel="icon" type="image/x-icon" href="images/8.svg.svg">
 </head>
-<body>
-    <h2>Create Account</h2>
-    <form action="process_registration.php" method="post">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br><br>
-        
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required><br><br>
-        
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br><br>
-        <label for="retype-password">Retype Password:</label>
-        <input type="password" id="retype-password" name="retype-password" required><br><br>
-        
-        <input type="submit" value="Register">
-    </form>
-    <p>Already have an account? <a href="index.html">Login here</a>.</p>
+<body id="form-body">
+    <div class="form-panel">
+        <h2>Create Account</h2>
+        <form action="process_registration.php" method="post">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required><br><br>
+            
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br><br>
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required><br><br>
+            <label for="retype-password">Retype Password:</label>
+            <input type="password" id="retype-password" name="retype-password" required><br><br>
+            
+            <input type="submit" value="Register">
+        </form>
+        <p>Already have an account?<a href="index.html">Login here</a></p>
+    </div>
+    
 </body>
 </html>

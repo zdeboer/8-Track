@@ -1,0 +1,99 @@
+@font-face {
+    font-family: "SF-Pro";
+    src: url("fonts/SF-Pro-Display-Regular.ttf") format("truetype");
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    min-width: 600px;
+}
+
+body {
+    font-family: "SF-Pro";
+    background-color: #1f1f1f;
+    color: white;
+}
+
+main {
+    margin: 24px;
+    margin-bottom: 0;
+    height: 88vh;
+}
+
+main h2 {
+    font-size: 1.8em;
+}
+
+main form, ul {
+    margin: 18px;
+}
+
+
+
+
+
+.track {
+    display: flex;
+    height: 75px;
+}
+
+.img-container {
+    height: 100%;
+}
+
+img {
+    max-height: 100%;
+    border-radius: 10px;
+}
+
+.track-info {
+    margin-left: 15px;
+    width: 100%;
+}
+
+.playlist-title a,
+.username a,
+.track-title {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    font-size: 1.3em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 92%;
+}
+
+.playlist-title,
+.track-title,
+.username {
+    margin-bottom: 2px;
+}
+
+.username {
+    font-size: 1.3em;
+    color: white;
+}
+
+.playlist-title a:hover,
+.username:hover {
+    text-decoration: underline;
+}
+
+.playlist-content,
+.playlist-timestamp,
+.user-email,
+.user-role,
+.user-date-joined,
+.artist,
+.track-timestamp {
+    font-size: 1em;
+    color: rgb(175, 175, 175);
+}
+

@@ -33,24 +33,38 @@ if ($_POST && !empty($_POST['name']) && !empty($_POST['description'])) {
     <meta charset="UTF-8">
     <title>Create Playlist</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="images/8.svg.svg">
 </head>
 <body>
-  <h2>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
-  <p>You have successfully logged in as: <?=$_SESSION['role']?></p>
-  <a href="logout.php">Logout</a>
+  <header>
+        <div class="header-user-info">
+            <h2>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
+            <p>You have successfully logged in as: <strong><?=$_SESSION['role']?></strong></p>
+        </div>
+        <div class="header-nav">
+            <a href="dashboard.php">Back</a>
+            <a href="logout.php">Logout</a>  
+        </div>
+    </header>
 
-  <a href="dashboard.php">Back</a>
-
-  <form method="post" action="new_playlist.php">
-    <label for="name">Playlist Name:</label>
-    <input type="text" id="name" name="name">
-    <label for="description">Description:</label>
-    <input type="text" id="description" name="description">
-    <input type="submit" value="Create"></button>
+  
+  <div id="login-body">
+    <div class="login-panel">
+      <h2>Create a Playlist</h2>
+      <form method="post" action="new_playlist.php">
+        <input type="text" id="name" name="name" placeholder="Playlist Name">
+        <input type="text" id="description" name="description" placeholder="Description">
+        <input type="submit" value="Create"></button>
+      </form>
+      <?php if (isset($posted) && $posted == true) {
+        header("Location: dashboard.php");
+      } 
+      ?>
+    </div>
+  </div>
+  <form method="post" action="process_comment.php">
+    <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
+    <input type="submit" class="button">
   </form>
-  <?php if (isset($posted) && $posted == true) {
-    header("Location: dashboard.php");
-  } 
-  ?>
 </body>
 </html>

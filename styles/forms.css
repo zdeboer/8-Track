@@ -1,0 +1,49 @@
+#form-body {
+    display: grid;
+    place-items: center;
+    height: 100vh;
+}
+
+.form-panel {
+    background: -webkit-linear-gradient(to right, #2C5364, #203A43);
+    background: linear-gradient(to right, #2C5364, #203A43);
+    color: #f2eadd;
+    padding: 16px;
+    border-radius: 16px;
+    text-align: center;
+    transform: scale(1.5);
+}
+
+.form-panel input {
+    border-radius: 12px;
+    padding: 6px;
+    border: none;
+}
+
+.form-panel h2 {
+    margin-bottom: 15px;
+}
+
+.form-panel a{
+    float: left;
+    color: white;
+}
+
+form select {
+    appearance: none;
+    color: white;
+    background-color: #0f0f0f;
+    border: none;
+    border-radius: 16px;
+    padding: 8px;
+    font-size: 1.07em;
+    text-align: center;
+}
+
+select:hover {
+    cursor: pointer;
+}
+
+option:hover {
+    cursor: pointer;
+}

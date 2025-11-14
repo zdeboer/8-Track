@@ -1,8 +1,8 @@
  <?php
-    $host = 'localhost';
-    $db = 'serverside'; // Your database name
-    $user = 'root'; // Your MySQL username (default for XAMPP)
-    $pass = ''; // Your MySQL password (default for XAMPP is empty)
+    $host = 'sql303.iceiy.com';
+    $db = 'icei_40412833_serverside'; // Your database name
+    $user = 'icei_40412833'; // Your MySQL username (default for XAMPP)
+    $pass = 'AlphaArrow'; // Your MySQL password (default for XAMPP is empty)
     $charset = 'utf8';
 
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";

@@ -9,15 +9,13 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-
-
 if (isset($_POST['filter'])) {
     $filter = $_POST['filter'];
 } else {
-    $filter = "updated_at DESC";
+    $filter = "timestamp DESC";
 }
 
-$query = "SELECT * FROM playlists WHERE user_id = $_SESSION[user_id] ORDER BY $filter LIMIT 20";
+$query = "SELECT * FROM comments ORDER BY $filter LIMIT 20";
 
 $statement = $pdo->prepare($query);
 
@@ -28,40 +26,33 @@ $statement->execute();
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home Page</title>
+    <title>Comment Admin Page</title>
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/header.css">
     <link rel="stylesheet" href="styles/buttons.css">
     <link rel="stylesheet" href="styles/lists.css">
-    <link rel="stylesheet" href="styles/forms.css">
     <link rel="icon" type="image/x-icon" href="images/8.svg.svg">
 </head>
 <body>
     <header>
         <div class="header-user-info">
-            <h2>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
-            <p>You have successfully logged in as: <strong><?=$_SESSION['role']?></strong></p>
+            <h2>Comment Admin Page</h2>
+            <p>Logged in as: <strong><?=$_SESSION['role']?></strong></p>
         </div>
         <div class="header-nav">
-            <?php if($_SESSION['role'] == 'admin') :?>
-            <a class="button" href="users.php">User Admin Page</a>
-            <?php endif ?>
+            <a class="button" href="users.php">Back</a>
             <a class="button" href="logout.php">Logout</a>  
         </div>
     </header>
     <main>
-        <h2>Your Library</h2>
-       
-        <a class="button" class="create-playlist" href="new_playlist.php">Create playlist</a>
-
-        <form action="dashboard.php" method="post">
+        <form action="comments.php" method="post">
             <?php
             $selected_value = $_POST['filter'] ?? '';
 
             $options = [
-                'updated_at DESC' => 'Recent',
-                'name ASC' => 'A-Z',
-                'name DESC' => 'Z-A'
+                'timestamp DESC' => 'Recent',
+                'username ASC' => 'A-Z',
+                'username DESC' => 'Z-A'
             ];
             ?>
 
@@ -73,27 +64,29 @@ $statement->execute();
                     </option>
                 <?php endforeach; ?>
             </select>
-            <input type="submit" class="button" id="filter-button" value="Filter">
+            <input class="button" type="submit" value="Filter" id="filter-button">
         </form>
+
+        
 
         <?php if($statement->rowCount() > 0): ?>
             <ul>
             <?php while($row = $statement->fetch()): ?>
-                <li class="playlist">
-                    <p class="playlist-title"><a href="playlist.php?id=<?=$row['id']?>"><?= $row['name'] ?></a></p>
-                    <p class="playlist-content"><?=$row['description']?></p>
-                    <p class="playlist-timestamp"><?= date("M d y", strtotime($row['created_at'])) ?></p>
+                <li class="user">
+                    <p class="username"><a href="user.php?id=<?=$row['id']?>"><?= $row['username'] ?></a></p>
+                    <p class="user-email"><?=$row['content']?></p>
+                    <p class="user-role"><?= $_SESSION['role'] ?></p>
+                    <p class="user-date-joined"><?= date("M d y", strtotime($row['timestamp'])) ?></p>
                 </li>
             <?php endwhile ?>
             </ul>
         <?php else: ?>
-            <p>No playlists.</p>
-        <?php endif ?>
-
+            <p>No users on platform.</p>
+        <?php endif ?>  
         <form method="post" action="process_comment.php">
             <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
             <input type="submit" class="button">
-        </form>
+        </form>      
     </main>
 </body>
 </html>

@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$query = "SELECT * FROM playlists WHERE id = :id";
+$query = "SELECT * FROM comments WHERE id = :id";
 $statement = $pdo->prepare($query);
 
 $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
@@ -42,17 +42,17 @@ if (isset($_POST['delete'])) {
 <body>
     <header>
         <div class="header-user-info">
-            <h2>User Admin Page</h2>
+            <h2>Comment Admin Page</h2>
             <p>Logged in as: <strong><?=$_SESSION['role']?></strong></p>
         </div>
         <div class="header-nav">
-            <a class="button" href="users.php">Back</a>
+            <a class="button" href="comments.php">Back</a>
             <a class="button" href="logout.php">Logout</a>  
         </div>
     </header>
 
     <?php
-    $query = "SELECT * FROM users WHERE id = :id";
+    $query = "SELECT * FROM comments WHERE id = :id";
     $statement = $pdo->prepare($query);
     $statement->bindValue('id', $id, PDO::PARAM_INT);
 
@@ -62,9 +62,9 @@ if (isset($_POST['delete'])) {
       <?php $row = $statement->fetch() ?>
       <div class="user-standalone">
           <p class="username"><?= $row['username'] ?></p>
-          <p class="user-email">Email: <?=$row['email']?></p>
+          <p class="user-email">Email: <?=$row['content']?></p>
           <p class="user-role">Role: <?= $row['role'] ?></p>
-          <p class="user-date-joined">Joined: <?= date("M d y", strtotime($row['joined_at'])) ?></p>
+          <p class="user-date-joined">Joined: <?= date("M d y", strtotime($row['timestamp'])) ?></p>
           <br>
           <form method="post"><input class="delete-button" type="submit" value="Delete" name="delete"></form>
       </div>
