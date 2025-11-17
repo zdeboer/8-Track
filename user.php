@@ -71,6 +71,29 @@ if (isset($_POST['delete'])) {
     <?php else: ?>
       <p>User not found.</p>
     <?php endif ?>
+
+    <?php
+    $query = "SELECT * FROM playlists WHERE user_id = :user_id";
+    $statement = $pdo->prepare($query);
+    $statement->bindValue(':user_id', $row['id'], PDO::PARAM_INT);
+
+    $statement->execute();
+
+    if($statement->rowCount() > 0): ?>
+            <ul>
+            <?php while($row = $statement->fetch()): ?>
+                <li class="playlist">
+                    <p class="playlist-title"><a href="playlist.php?id=<?=$row['id']?>"><?= $row['name'] ?></a></p>
+                    <p class="playlist-content"><?=$row['description']?></p>
+                    <p class="playlist-timestamp"><?= date("M d y", strtotime($row['created_at'])) ?></p>
+                </li>
+            <?php endwhile ?>
+            </ul>
+        <?php else: ?>
+            <p>No playlists.</p>
+        <?php endif ?>
+    
+
       <form method="post" action="process_comment.php">
         <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
         <input type="submit" class="button">

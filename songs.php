@@ -1,0 +1,155 @@
+<?php
+require('connect.php');
+require('spotify_config.php');
+require_once __DIR__ . '/src/SpotifyClient.php';
+
+
+session_start();
+
+// Check if the user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.html");
+    exit();
+}
+
+if (isset($_POST['filter'])) {
+    $filter = $_POST['filter'];
+} else {
+    $filter = "title ASC";
+}
+
+if (isset($_POST['no-of-results'])) {
+  $noOfResults = $_POST['no-of-results'];
+} else {
+  $noOfResults = "LIMIT 10";
+}
+
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home Page</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/header.css">
+    <link rel="stylesheet" href="styles/buttons.css">
+    <link rel="stylesheet" href="styles/lists.css">
+    <link rel="stylesheet" href="styles/forms.css">
+    <link rel="icon" type="image/x-icon" href="images/8.svg.svg">
+</head>
+<body>
+    <header>
+        <div class="header-user-info">
+            <h2>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
+            <p>You have successfully logged in as: <strong><?=$_SESSION['role']?></strong></p>
+        </div>
+        <div class="header-nav">
+            
+            <?php if($_SESSION['user_id'] == "GUEST") : ?>
+            <a class="button" href="index.html">Log In</a>
+            <?php else: ?>
+            <a class="button" href="dashboard.php">Back</a>
+            <a class="button" href="logout.php">Logout</a>
+            <?php endif ?>    
+        </div>
+    </header>
+    <main>
+        <h2>All Songs</h2>
+        <p>Here is all the songs ever uploaded by all users on 8-Track</p>
+
+        <br>
+        <?php if($_SESSION['user_id'] == "GUEST") : ?>
+          <p style="color: red;">As a guest, you can only view the full songs list, register to create your own playlists.</p>
+        <?php endif ?>
+
+        <form action="songs.php" method="post">
+            <?php
+            $selected_value = $_POST['filter'] ?? '';
+
+            $options = [
+                'added_at DESC' => 'Recent',
+                'title ASC' => 'A-Z',
+                'title DESC' => 'Z-A',
+                'genre ASC' => 'Genre'
+            ];
+            ?>
+
+            <select name="filter">
+                <?php foreach ($options as $value => $text): ?>
+                    <option value="<?php echo htmlspecialchars($value); ?>"
+                        <?php if ($value === $selected_value) echo 'selected="selected"'; ?>>
+                        <?php echo htmlspecialchars($text); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
+
+            <?php
+              $resultNum = [
+                ' LIMIT 10' => '10',
+                ' LIMIT 25' => '25',
+                ' LIMIT 50' => '50',
+                ' LIMIT 100' => '100',
+                '' => 'All'
+              ]
+            ?>
+            <select name="no-of-results">
+                <?php foreach ($resultNum as $value => $text): ?>
+                    <option value="<?php echo htmlspecialchars($value); ?>"
+                        <?php if ($value === $selected_value) echo 'selected="selected"'; ?>>
+                        <?php echo htmlspecialchars($text); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <input type="submit" class="button" id="filter-button" value="Filter">
+        </form>
+
+        <?php
+        $query = "SELECT *
+          FROM (
+              SELECT
+                  *,
+                  ROW_NUMBER() OVER (PARTITION BY spotify_track_id ORDER BY id) as rn
+              FROM
+                  playlist_tracks
+          ) as subquery
+          WHERE
+              rn = 1
+          ORDER BY $filter $noOfResults;";
+        $statement = $pdo->prepare($query);
+
+        $statement->execute();
+
+        if($statement->rowCount() > 0): ?>
+            <ul>
+            <?php while($row = $statement->fetch()): ?>
+                <li class="track">
+                    <div class="img-container">
+                        <img src="<?= $row['album_image'] ?>">
+                    </div>
+                    <div class="track-info">
+                        <p class="track-title"><?= $row['title'] ?></p>
+                        <p class="artist"><?=$row['artist']?></p>
+                        <p class="artist"><?= ucwords(substr($row['genre'], 0, strpos($row['genre'], ','))) ?></p>
+                        <p class="track-timestamp"><?= date("M d y", strtotime($row['added_at'])) ?></p>
+                    </div>
+                </li>
+            <?php endwhile ?>
+            </ul>
+        <?php else: ?>
+            <ul>
+                <p>No songs.</p>
+            </ul>
+        <?php endif ?>
+        <form method="post" action="process_comment.php">
+            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
+            <?php if($_SESSION['user_id'] == "GUEST"): ?>
+            <p class="button">Must sign in to leave comments</p>
+            <?php else: ?>
+            <input type="submit" class="button">
+            <?php endif ?>
+        </form>
+    </main> 
+</body>
+</html>

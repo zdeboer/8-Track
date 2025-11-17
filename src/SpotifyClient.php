@@ -104,5 +104,76 @@ class SpotifyClient
 
         return $out;
     }
+
+    private function getJson(string $url): array
+    {
+        $token = $this->getAccessToken();
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $token,
+                'Accept: application/json'
+            ],
+            CURLOPT_TIMEOUT => 10,
+        ]);
+
+        $res = curl_exec($ch);
+        $err = curl_error($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($res === false) {
+            throw new \RuntimeException('Spotify request failed: ' . $err);
+        }
+        $data = json_decode($res, true);
+        if ($code < 200 || $code >= 300) {
+            $msg = is_array($data) && isset($data['error']) ? json_encode($data['error']) : $res;
+            throw new \RuntimeException('Spotify API returned HTTP ' . $code . ': ' . $msg);
+        }
+        return (array)$data;
+    }
+
+    // changed code: get track object
+    public function getTrack(string $trackId): array
+    {
+        $url = 'https://api.spotify.com/v1/tracks/' . rawurlencode($trackId);
+        return $this->getJson($url);
+    }
+
+    // changed code: given array of artist ids, return array of artist objects (batched)
+    public function getArtists(array $artistIds): array
+    {
+        $ids = array_map('rawurlencode', array_filter($artistIds));
+        if (!$ids) return [];
+        $url = 'https://api.spotify.com/v1/artists?ids=' . implode(',', $ids);
+        $data = $this->getJson($url);
+        return $data['artists'] ?? [];
+    }
+
+    // changed code: convenience method to get genres for a track id
+    public function getTrackGenres(string $trackId): string
+    {
+        $track = $this->getTrack($trackId);
+        $artistIds = [];
+        foreach ($track['artists'] ?? [] as $a) {
+            if (!empty($a['id'])) $artistIds[] = $a['id'];
+        }
+        if (!$artistIds) return '';
+
+        $artists = $this->getArtists($artistIds);
+
+        $genres = [];
+        foreach ($artists as $art) {
+            if (!empty($art['genres']) && is_array($art['genres'])) {
+                foreach ($art['genres'] as $g) $genres[] = $g;
+            }
+        }
+
+        $genres = array_values(array_unique(array_filter($genres)));
+        // return up to first 5 genres joined by comma
+        return $genres ? implode(', ', array_slice($genres, 0, 5)) : '';
+    }
 }
 ?>

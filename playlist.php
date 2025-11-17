@@ -57,12 +57,10 @@ if (isset($_POST['delete'])) {
     <main>
         <h2><?=$row['name']?></h2>
         <p><?=$row['description']?></p>
+       
+        <br>
 
-        </form>
-            <form id="spotify-search-form">
-            <input id="spotify-search-input" name="q" type="search" placeholder="Search Spotify tracks" />
-            <button class="button" type="submit">Search</button>
-        </form>
+        <p>Add songs below</p>
 
         <?php
         $query = "SELECT * FROM playlist_tracks WHERE playlist_id = :id";
@@ -72,19 +70,37 @@ if (isset($_POST['delete'])) {
         $statement->execute();
 
         if($statement->rowCount() > 0): ?>
-            <ul>
+            <ul id="playlist-tracks">
             <?php while($row = $statement->fetch()): ?>
-                <li class="track">
+                <?php $track_row_id = $row['id']; ?>
+                <li class="track" data-row-id="<?= (int)$track_row_id ?>">
                     <div class="img-container">
-                        <img src="<?= $row['album_image'] ?>">
+                        <img src="<?= htmlspecialchars($row['album_image'] ?? '') ?>">
                     </div>
                     <div class="track-info">
-                        <p class="track-title"><?= $row['title'] ?></p>
-                        <p class="artist"><?=$row['artist']?></p>
-                        <p class="track-timestamp"><?= date("M d y", strtotime($row['added_at'])) ?></p>
+                        <p class="track-title"><?= htmlspecialchars($row['title']) ?></p>
+                        <p class="artist"><?= htmlspecialchars($row['artist']) ?></p>
+                        <p class="artist"><?= htmlspecialchars( ($row['genre'] ?? '') ? ucwords(explode(',', $row['genre'])[0]) : '' ) ?></p>
+                        <p class="track-timestamp"><?= htmlspecialchars(date("M d y", strtotime($row['added_at']))) ?></p>
                     </div>
+
+                    <!-- changed code: simple delete button with data-row-id -->
+                    <button type="button" class="delete-track-btn" data-row-id="<?= (int)$track_row_id ?>">Delete</button>
                 </li>
             <?php endwhile ?>
+            </ul>
+
+            <br>
+            
+            <h2>Add Songs: </h2>
+
+            <form id="spotify-search-form">
+                <input id="spotify-search-input" name="q" type="search" placeholder="Search to add songs" />
+                <button class="button" type="submit">Search</button>
+            </form>
+            
+            <ul class="add-results">
+                <div id="spotify-results"></div>
             </ul>
         <?php else: ?>
             <ul>
@@ -96,21 +112,15 @@ if (isset($_POST['delete'])) {
             <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
             <input type="submit" class="button">
         </form>
-            <form id="spotify-search-form">
-            <input id="spotify-search-input" name="q" type="search" placeholder="Search Spotify tracks" />
-            <button class="button" type="submit">Search</button>
-        </form>
 
-        <div id="spotify-results"></div>
+        
 
         <script>
-            /* minimal: fetch JSON into a variable without redirect */
             (function(){
                 const form = document.getElementById('spotify-search-form');
                 const input = document.getElementById('spotify-search-input');
                 const resultsEl = document.getElementById('spotify-results');
 
-                // this will hold the JSON returned from spotify_search.php
                 window.spotifySearchResults = [];
 
                 form.addEventListener('submit', async function(e){
@@ -134,13 +144,18 @@ if (isset($_POST['delete'])) {
 
                     resultsEl.innerHTML = '';
                     data.forEach(track => {
-                        const d = document.createElement('div');
-                        d.className = 'spotify-track';
+                        const d = document.createElement('li');
+                        d.className = 'track';
                         d.innerHTML = `
-                            <img src="${track.album_image || ''}" style="width:48px;height:48px;object-fit:cover;margin-right:8px;">
-                            <strong>${escapeHtml(track.name)}</strong>
-                            <div>${escapeHtml((track.artists || []).join(', '))}</div>
-                            <button data-track-id="${escapeHtml(track.id)}" class="add-track-btn">Add</button>
+                            <div class="img-container">
+                                <img src="${track.album_image || ''}">
+                            </div>
+                            <div class="track-info">
+                                <strong class="track-title">${escapeHtml(track.name)}</strong>
+                                <div class="artist">${escapeHtml((track.artists || []).join(', '))}</div>
+                            </div>
+                            <button data-track-id="${escapeHtml(track.id)}" 
+                            class="add-track-btn" class="button">Add</button>
                         `;
                         resultsEl.appendChild(d);
                     });
@@ -195,6 +210,44 @@ if (isset($_POST['delete'])) {
                     }
                 });
                 
+                const playlistTracksEl = document.getElementById('playlist-tracks');
+                if (playlistTracksEl) {
+                    playlistTracksEl.addEventListener('click', async function(e){
+                        const btn = e.target.closest('.delete-track-btn');
+                        if (!btn) return;
+                        const rowId = btn.dataset.rowId;
+                        if (!rowId) return;
+                        if (!confirm('Delete this track?')) return;
+
+                        btn.disabled = true;
+                        const prevText = btn.textContent;
+                        btn.textContent = 'Deleting...';
+
+                        try {
+                            const resp = await fetch('/delete_track.php', {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: parseInt(rowId, 10) })
+                            });
+                            const json = await resp.json();
+                            if (resp.ok && json.ok) {
+                                const li = btn.closest('li');
+                                if (li) li.remove();
+                            } else {
+                                alert(json.error || 'Delete failed');
+                                btn.disabled = false;
+                                btn.textContent = prevText;
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            alert('Network error');
+                            btn.disabled = false;
+                            btn.textContent = prevText;
+                        }
+                    });
+                }
+
                 function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
             })();
         </script>

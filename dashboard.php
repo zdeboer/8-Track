@@ -9,8 +9,6 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-
-
 if (isset($_POST['filter'])) {
     $filter = $_POST['filter'];
 } else {
@@ -46,11 +44,19 @@ $statement->execute();
             <?php if($_SESSION['role'] == 'admin') :?>
             <a class="button" href="users.php">User Admin Page</a>
             <?php endif ?>
-            <a class="button" href="logout.php">Logout</a>  
+            <?php if($_SESSION['user_id'] == "GUEST") : ?>
+            <a class="button" href="index.html">Log In</a>
+            <?php else: ?>
+            <a class="button" href="logout.php">Logout</a>
+            <?php endif ?>  
         </div>
     </header>
     <main>
         <h2>Your Library</h2>
+
+        <br>
+        
+        <a class="button" href="songs.php">All Songs</a>
        
         <a class="button" class="create-playlist" href="new_playlist.php">Create playlist</a>
 

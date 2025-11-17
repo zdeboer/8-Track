@@ -1,16 +1,19 @@
 <?php
 require_once __DIR__ . '/connect.php';
+require_once __DIR__ . '/spotify_config.php';
+require_once __DIR__ . '/src/SpotifyClient.php';
+
+use App\SpotifyClient;
+
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-// require login
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['error' => 'not_logged_in']);
     exit;
 }
 
-// read JSON body (also accepts form POST fallback)
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) $input = $_POST;
 
@@ -19,6 +22,7 @@ $spotify_track_id = isset($input['spotify_track_id']) ? trim($input['spotify_tra
 $title = isset($input['title']) ? trim($input['title']) : '';
 $artist = isset($input['artist']) ? trim($input['artist']) : '';
 $album_image = isset($input['album_image']) ? trim($input['album_image']) : '';
+$genre = isset($input['genre']) ? trim($input['genre']) : '';
 
 if (!$playlist_id || $spotify_track_id === '') {
     http_response_code(400);
@@ -42,11 +46,26 @@ if ($owner != $_SESSION['user_id']) {
     exit;
 }
 
-// insert the spotify track id + title + artist + album_image into playlist_tracks
+// changed code: if no genre supplied, fetch genres from Spotify (artist genres)
+if ($genre === '') {
+    try {
+        if (!defined('SPOTIFY_CLIENT_ID') || !defined('SPOTIFY_CLIENT_SECRET')) {
+            // spotify_config.php must define them
+            $genre = '';
+        } else {
+            $client = new SpotifyClient(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET);
+            $genre = $client->getTrackGenres($spotify_track_id);
+        }
+    } catch (\Throwable $e) {
+        // if Spotify call fails, continue without genre
+        $genre = '';
+    }
+}
+
 try {
-    $stmt = $pdo->prepare('INSERT INTO playlist_tracks (playlist_id, spotify_track_id, title, artist, album_image, added_by, added_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
-    $stmt->execute([$playlist_id, $spotify_track_id, $title, $artist, $album_image, $_SESSION['user_id']]);
-    echo json_encode(['ok' => true]);
+    $stmt = $pdo->prepare('INSERT INTO playlist_tracks (playlist_id, spotify_track_id, title, artist, album_image, genre, added_by, added_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())');
+    $stmt->execute([$playlist_id, $spotify_track_id, $title, $artist, $album_image, $genre, $_SESSION['user_id']]);
+    echo json_encode(['ok' => true, 'genre' => $genre]);
 } catch (\PDOException $e) {
     http_response_code(500);
     echo json_encode(['error' => 'db_error', 'msg' => $e->getMessage()]);

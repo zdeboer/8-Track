@@ -40,10 +40,30 @@ form select {
     text-align: center;
 }
 
+.number-input {
+    color: white;
+    background-color: #0f0f0f;
+    border: none;
+    border-radius: 16px;
+    padding: 8px;
+    font-size: 1.07em;
+    text-align: center;
+}
+
 select:hover {
     cursor: pointer;
 }
 
 option:hover {
     cursor: pointer;
+}
+
+#spotify-search-input {
+    color: white;
+    background-color: #0f0f0f;
+    border: none;
+    border-radius: 16px;
+    padding: 8px;
+    font-size: 1.07em;
+    text-align: center;
 }

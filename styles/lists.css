@@ -14,3 +14,11 @@ li,
     padding: 16px;
     margin-bottom: 10px;
 }
+
+.add-results {
+    padding: 12px;
+    margin-bottom: 0;
+    background-color: #0f0f0f;
+    border-radius: 24px;
+    list-style: none;
+}

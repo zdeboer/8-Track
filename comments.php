@@ -73,7 +73,7 @@ $statement->execute();
             <ul>
             <?php while($row = $statement->fetch()): ?>
                 <li class="user">
-                    <p class="username"><a href="user.php?id=<?=$row['id']?>"><?= $row['username'] ?></a></p>
+                    <p class="username"><a href="comment.php?id=<?=$row['id']?>"><?= $row['username'] ?></a></p>
                     <p class="user-email"><?=$row['content']?></p>
                     <p class="user-role"><?= $_SESSION['role'] ?></p>
                     <p class="user-date-joined"><?= date("M d y", strtotime($row['timestamp'])) ?></p>

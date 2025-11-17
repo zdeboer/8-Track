@@ -1,5 +1,7 @@
 .button,
-.delete-button {
+.add-track.btn,
+.delete-button,
+.delete-track-btn {
     display: inline-block;
     background-color:#ecd1a5;
     padding: 8px;
@@ -13,25 +15,30 @@
 }
 
 .button,
+.add-track-btn,
 .delete-button {
     font-size: 0.95em;
     padding: 6px 8px 6px 8px;
     border: none;
 }
 
-.button:hover {
+.button:hover,
+.add-track-btn
+:hover {
     transform: scale(1.02);
     background-color:#ecd6b1;
     cursor: pointer;
 }
 
-.delete-button {
+.delete-button,
+.delete-track-btn {
     background-color: #313131;
     border: 2px solid red;
     color: white;
 }
 
-.delete-button:hover {
+.delete-button:hover,
+.delete-track-btn:hover {
     transform: scale(1.01);
     background-color:red;
     cursor: pointer;

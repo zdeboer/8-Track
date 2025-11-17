@@ -32,7 +32,11 @@ if ($_POST && !empty($_POST['name']) && !empty($_POST['description'])) {
 <head>
     <meta charset="UTF-8">
     <title>Create Playlist</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/header.css">
+    <link rel="stylesheet" href="styles/buttons.css">
+    <link rel="stylesheet" href="styles/lists.css">
+    <link rel="stylesheet" href="styles/forms.css">
     <link rel="icon" type="image/x-icon" href="images/8.svg.svg">
 </head>
 <body>
@@ -62,9 +66,5 @@ if ($_POST && !empty($_POST['name']) && !empty($_POST['description'])) {
       ?>
     </div>
   </div>
-  <form method="post" action="process_comment.php">
-    <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
-    <input type="submit" class="button">
-  </form>
 </body>
 </html>
