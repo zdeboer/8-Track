@@ -6,7 +6,6 @@ require_once __DIR__ . '/src/SpotifyClient.php';
 
 session_start();
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.html");
     exit();
@@ -47,11 +46,11 @@ if (isset($_POST['no-of-results'])) {
         <div class="header-nav">
             
             <?php if($_SESSION['user_id'] == "GUEST") : ?>
-            <a class="button" href="index.html">Log In</a>
+              <a class="button" href="index.html">Log In</a>
             <?php else: ?>
-            <a class="button" href="dashboard.php">Back</a>
-            <a class="button" href="logout.php">Logout</a>
-            <?php endif ?>    
+              <a class="button" href="dashboard.php">Back</a>
+              <a class="button" href="logout.php">Logout</a>
+            <?php endif ?>
         </div>
     </header>
     <main>
@@ -66,6 +65,7 @@ if (isset($_POST['no-of-results'])) {
         <form action="songs.php" method="post">
             <?php
             $selected_value = $_POST['filter'] ?? '';
+            
 
             $options = [
                 'added_at DESC' => 'Recent',
@@ -86,6 +86,7 @@ if (isset($_POST['no-of-results'])) {
 
 
             <?php
+              $selected_num = $_POST['no-of-results'] ?? ' LIMIT 10';
               $resultNum = [
                 ' LIMIT 10' => '10',
                 ' LIMIT 25' => '25',
@@ -97,7 +98,7 @@ if (isset($_POST['no-of-results'])) {
             <select name="no-of-results">
                 <?php foreach ($resultNum as $value => $text): ?>
                     <option value="<?php echo htmlspecialchars($value); ?>"
-                        <?php if ($value === $selected_value) echo 'selected="selected"'; ?>>
+                        <?php if ($value === $selected_num) echo 'selected="selected"'; ?>>
                         <?php echo htmlspecialchars($text); ?>
                     </option>
                 <?php endforeach; ?>
@@ -126,7 +127,7 @@ if (isset($_POST['no-of-results'])) {
             <?php while($row = $statement->fetch()): ?>
                 <li class="track">
                     <div class="img-container">
-                        <img src="<?= $row['album_image'] ?>">
+                        <img src="<?= $row['album_image'] ?>" alt="#">
                     </div>
                     <div class="track-info">
                         <p class="track-title"><?= $row['title'] ?></p>
@@ -143,7 +144,7 @@ if (isset($_POST['no-of-results'])) {
             </ul>
         <?php endif ?>
         <form method="post" action="process_comment.php">
-            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
+            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" name="comment"></textarea>
             <?php if($_SESSION['user_id'] == "GUEST"): ?>
             <p class="button">Must sign in to leave comments</p>
             <?php else: ?>

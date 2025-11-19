@@ -6,10 +6,21 @@ require_once __DIR__ . '/src/SpotifyClient.php';
 
 session_start();
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.html");
     exit();
+}
+
+if (isset($_POST['filter'])) {
+    $filter = $_POST['filter'];
+} else {
+    $filter = "title ASC";
+}
+
+if (isset($_POST['no-of-results'])) {
+  $noOfResults = $_POST['no-of-results'];
+} else {
+  $noOfResults = "LIMIT 10";
 }
 
 $query = "SELECT * FROM playlists WHERE id = :id";
@@ -60,10 +71,54 @@ if (isset($_POST['delete'])) {
        
         <br>
 
-        <p>Add songs below</p>
+        <p>Add songs at the bottom of the page</p>
+
+        <form action="playlist.php?id=<?= $id ?>" method="post">
+            <?php
+            $selected_value = $_POST['filter'] ?? 'added_at DESC';
+            
+
+            $options = [
+                'added_at DESC' => 'Recent',
+                'title ASC' => 'A-Z',
+                'title DESC' => 'Z-A',
+                'genre ASC' => 'Genre'
+            ];
+            ?>
+
+            <select name="filter">
+                <?php foreach ($options as $value => $text): ?>
+                    <option value="<?php echo htmlspecialchars($value); ?>"
+                        <?php if ($value === $selected_value) echo 'selected="selected"'; ?>>
+                        <?php echo htmlspecialchars($text); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
+
+            <?php
+              $selected_num = $_POST['no-of-results'] ?? ' LIMIT 10';
+              $resultNum = [
+                ' LIMIT 10' => '10',
+                ' LIMIT 25' => '25',
+                ' LIMIT 50' => '50',
+                ' LIMIT 100' => '100',
+                '' => 'All'
+              ]
+            ?>
+            <select name="no-of-results">
+                <?php foreach ($resultNum as $value => $text): ?>
+                    <option value="<?php echo htmlspecialchars($value); ?>"
+                        <?php if ($value === $selected_num) echo 'selected="selected"'; ?>>
+                        <?php echo htmlspecialchars($text); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <input type="submit" class="button" id="filter-button" value="Filter">
+        </form>
 
         <?php
-        $query = "SELECT * FROM playlist_tracks WHERE playlist_id = :id";
+        $query = "SELECT * FROM playlist_tracks WHERE playlist_id = :id ORDER BY $filter $noOfResults;";
         $statement = $pdo->prepare($query);
         $statement->bindValue('id', $id, PDO::PARAM_INT);
 
@@ -75,7 +130,7 @@ if (isset($_POST['delete'])) {
                 <?php $track_row_id = $row['id']; ?>
                 <li class="track" data-row-id="<?= (int)$track_row_id ?>">
                     <div class="img-container">
-                        <img src="<?= htmlspecialchars($row['album_image'] ?? '') ?>">
+                        <img src="<?= htmlspecialchars($row['album_image'] ?? 'images/placeholder.png') ?>" alt="#">
                     </div>
                     <div class="track-info">
                         <p class="track-title"><?= htmlspecialchars($row['title']) ?></p>
@@ -83,15 +138,27 @@ if (isset($_POST['delete'])) {
                         <p class="artist"><?= htmlspecialchars( ($row['genre'] ?? '') ? ucwords(explode(',', $row['genre'])[0]) : '' ) ?></p>
                         <p class="track-timestamp"><?= htmlspecialchars(date("M d y", strtotime($row['added_at']))) ?></p>
                     </div>
-
-                    <!-- changed code: simple delete button with data-row-id -->
                     <button type="button" class="delete-track-btn" data-row-id="<?= (int)$track_row_id ?>">Delete</button>
                 </li>
             <?php endwhile ?>
             </ul>
 
-            <br>
+            <br><br>
             
+            <h2>Add Songs: </h2>
+
+            <form id="spotify-search-form">
+                <input id="spotify-search-input" name="q" type="search" placeholder="Search to add songs">
+                <button class="button" type="submit">Search</button>
+            </form>
+            
+            <div class="add-results">
+                <div id="spotify-results"></div>
+            </div>
+        <?php else: ?>
+            <ul>
+                <p>No songs.</p>
+            </ul>
             <h2>Add Songs: </h2>
 
             <form id="spotify-search-form">
@@ -102,14 +169,11 @@ if (isset($_POST['delete'])) {
             <ul class="add-results">
                 <div id="spotify-results"></div>
             </ul>
-        <?php else: ?>
-            <ul>
-                <p>No songs.</p>
-            </ul>
         <?php endif ?>
         <form method="post"><input class="delete-button" type="submit" value="Delete Playlist" name="delete"></form>
+        <a class="button" href="edit_playlist.php?id=<?= $id ?>">Edit</a>
         <form method="post" action="process_comment.php">
-            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
+            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" name="comment"></textarea>
             <input type="submit" class="button">
         </form>
 
@@ -129,7 +193,7 @@ if (isset($_POST['delete'])) {
                     if (!q) return;
                     resultsEl.textContent = 'Searching...';
 
-                    const resp = await fetch('/spotify_search.php?q=' + encodeURIComponent(q) + '&limit=30', { credentials: 'same-origin' });
+                    const resp = await fetch('spotify_search.php?q=' + encodeURIComponent(q) + '&limit=30', { credentials: 'same-origin' });
                     // if spotify_search.php returns raw JSON array/object this will parse it
                     const data = await resp.json();
 

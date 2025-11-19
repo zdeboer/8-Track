@@ -3,9 +3,8 @@ require('connect.php');
 
 session_start();
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: index.html");
+    header("Location: ./index.html");
     exit();
 }
 
@@ -31,6 +30,7 @@ $statement->execute();
     <link rel="stylesheet" href="styles/header.css">
     <link rel="stylesheet" href="styles/buttons.css">
     <link rel="stylesheet" href="styles/lists.css">
+    <link rel="stylesheet" href="styles/forms.css">
     <link rel="icon" type="image/x-icon" href="images/8.svg.svg">
 </head>
 <body>
@@ -82,11 +82,7 @@ $statement->execute();
             </ul>
         <?php else: ?>
             <p>No users on platform.</p>
-        <?php endif ?>  
-        <form method="post" action="process_comment.php">
-            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
-            <input type="submit" class="button">
-        </form>      
+        <?php endif ?>       
     </main>
 </body>
 </html>

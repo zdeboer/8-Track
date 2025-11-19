@@ -3,7 +3,6 @@ require('connect.php');
 
 session_start();
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.html");
     exit();
@@ -66,7 +65,12 @@ if (isset($_POST['delete'])) {
           <p class="user-role">Role: <?= $row['role'] ?></p>
           <p class="user-date-joined">Joined: <?= date("M d y", strtotime($row['joined_at'])) ?></p>
           <br>
-          <form method="post"><input class="delete-button" type="submit" value="Delete" name="delete"></form>
+          <div style="display:flex;">
+            <form method="post"><input class="delete-button" type="submit" value="Delete" name="delete"></form>
+            <a class="button" href="edit_user.php?id=<?= $row['id'] ?>">Edit User</a>
+          </div>
+          
+
       </div>
     <?php else: ?>
       <p>User not found.</p>
@@ -83,20 +87,22 @@ if (isset($_POST['delete'])) {
             <ul>
             <?php while($row = $statement->fetch()): ?>
                 <li class="playlist">
-                    <p class="playlist-title"><a href="playlist.php?id=<?=$row['id']?>"><?= $row['name'] ?></a></p>
-                    <p class="playlist-content"><?=$row['description']?></p>
-                    <p class="playlist-timestamp"><?= date("M d y", strtotime($row['created_at'])) ?></p>
+                    <div class="img-container">
+                        <img src="<?= htmlspecialchars($row['image'] ?? 'images/placeholder.png') ?>">
+                    </div>
+                    <div class="playlist-info">
+                        <p class="playlist-title"><a href="playlist.php?id=<?=$row['id']?>"><?= $row['name'] ?></a></p>
+                        <p class="playlist-content"><?=$row['description']?></p>
+                        <p class="playlist-timestamp"><?= date("M d y", strtotime($row['created_at'])) ?></p>
+                    </div>
                 </li>
             <?php endwhile ?>
             </ul>
         <?php else: ?>
-            <p>No playlists.</p>
+            <ul>
+                <p>No playlists.</p>
+            </ul>
+            
         <?php endif ?>
-    
-
-      <form method="post" action="process_comment.php">
-        <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
-        <input type="submit" class="button">
-    </form>
 </body>
 </html>

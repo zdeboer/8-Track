@@ -3,7 +3,6 @@ require('connect.php');
 
 session_start();
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.html");
     exit();
@@ -58,7 +57,7 @@ $statement->execute();
         
         <a class="button" href="songs.php">All Songs</a>
        
-        <a class="button" class="create-playlist" href="new_playlist.php">Create playlist</a>
+        <a class="button" href="new_playlist.php">Create playlist</a>
 
         <form action="dashboard.php" method="post">
             <?php
@@ -86,9 +85,14 @@ $statement->execute();
             <ul>
             <?php while($row = $statement->fetch()): ?>
                 <li class="playlist">
-                    <p class="playlist-title"><a href="playlist.php?id=<?=$row['id']?>"><?= $row['name'] ?></a></p>
-                    <p class="playlist-content"><?=$row['description']?></p>
-                    <p class="playlist-timestamp"><?= date("M d y", strtotime($row['created_at'])) ?></p>
+                    <div class="img-container">
+                        <img src="<?= htmlspecialchars($row['image'] ?? 'images/placeholder.png') ?>" alt="#">
+                    </div>
+                    <div class="playlist-info">
+                        <p class="playlist-title"><a href="playlist.php?id=<?=$row['id']?>"><?= $row['name'] ?></a></p>
+                        <p class="playlist-content"><?=$row['description']?></p>
+                        <p class="playlist-timestamp"><?= date("M d y", strtotime($row['created_at'])) ?></p>
+                    </div>
                 </li>
             <?php endwhile ?>
             </ul>
@@ -97,7 +101,7 @@ $statement->execute();
         <?php endif ?>
 
         <form method="post" action="process_comment.php">
-            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" col="50" name="comment"></textarea>
+            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" name="comment"></textarea>
             <input type="submit" class="button">
         </form>
     </main>

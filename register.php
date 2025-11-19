@@ -5,6 +5,7 @@
     <title>Create Account</title>
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/forms.css">
+    <link rel="stylesheet" href="styles/buttons.css">
     <link rel="icon" type="image/x-icon" href="images/8.svg.svg">
 </head>
 <body id="form-body">
@@ -22,7 +23,7 @@
             <label for="retype-password">Retype Password:</label>
             <input type="password" id="retype-password" name="retype-password" required><br><br>
             
-            <input type="submit" value="Register">
+            <input class="button" type="submit" value="Register">
         </form>
         <p>Already have an account?<a href="index.html">Login here</a></p>
     </div>

@@ -30,7 +30,6 @@ if (!$playlist_id || $spotify_track_id === '') {
     exit;
 }
 
-// verify playlist exists and belongs to current user
 $stmt = $pdo->prepare('SELECT user_id FROM playlists WHERE id = ? LIMIT 1');
 $stmt->execute([$playlist_id]);
 $owner = $stmt->fetchColumn();
@@ -46,18 +45,15 @@ if ($owner != $_SESSION['user_id']) {
     exit;
 }
 
-// changed code: if no genre supplied, fetch genres from Spotify (artist genres)
 if ($genre === '') {
     try {
         if (!defined('SPOTIFY_CLIENT_ID') || !defined('SPOTIFY_CLIENT_SECRET')) {
-            // spotify_config.php must define them
             $genre = '';
         } else {
             $client = new SpotifyClient(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET);
             $genre = $client->getTrackGenres($spotify_track_id);
         }
     } catch (\Throwable $e) {
-        // if Spotify call fails, continue without genre
         $genre = '';
     }
 }

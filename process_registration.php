@@ -1,5 +1,4 @@
 <?php
-// process_registration.php
 require 'connect.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -8,7 +7,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST['password'];
     $retype_password = $_POST['retype-password'];
 
-    // Basic validation
     if (empty($username) || empty($email) || empty($password)) {
         die("Please fill in all fields.");
     }
@@ -17,7 +15,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         die("Passwords do not match. Try again.");
     }
 
-    // Hash the password
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
     try {
@@ -25,10 +22,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $stmt->execute([$username, $email, $hashed_password]);
 
-        echo "Registration successful! You can now <a href='index.html'>log in</a>.";
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: users.php");
+            exit();
+        } else {
+            echo "Registration successful! You can now <a href='index.html'>log in</a>.";
+        }
+
+        
 
     } catch (PDOException $e) {
-        // Handle potential errors, such as duplicate username/email
         if ($e->getCode() == 23000) {
             echo "Error: Username or Email already exists. Please choose another.";
         } else {

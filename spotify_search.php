@@ -1,5 +1,4 @@
 <?php
-// Minimal public endpoint:
 // GET https://8-track.iceiy.com/spotify_search.php?q=daft+punk&limit=10
 
 require_once __DIR__ . '/spotify_config.php';

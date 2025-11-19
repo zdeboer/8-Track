@@ -11,7 +11,7 @@
 html {
     margin-bottom: 0;
     padding-bottom: 0;
-    min-width: 600px;
+    min-width: 1000px;
 }
 
 body {
@@ -38,7 +38,8 @@ main form, ul {
 
 
 
-.track {
+.track,
+.playlist {
     display: flex;
     height: 75px;
 }
@@ -50,11 +51,14 @@ main form, ul {
 img {
     max-height: 100%;
     border-radius: 10px;
+    aspect-ratio: 1/1;
+    
 }
 
-.track-info {
+.track-info,
+.playlist-info {
     margin-left: 15px;
-    width: 100%;
+    width: 80%;
 }
 
 .playlist-title a,
@@ -67,7 +71,7 @@ img {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    width: 92%;
+    width: 80%;
 }
 
 .playlist-title,
@@ -77,6 +81,11 @@ img {
 }
 
 .username {
+    font-size: 1.3em;
+    color: white;
+}
+
+.user {
     font-size: 1.3em;
     color: white;
 }
@@ -95,5 +104,11 @@ img {
 .track-timestamp {
     font-size: 1em;
     color: rgb(175, 175, 175);
+}
+
+.comment-processed {
+    display: grid;
+    place-items: center;
+    height: 100vh;
 }
 

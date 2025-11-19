@@ -30,15 +30,17 @@
     <title>Comment Submitted!</title>
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/forms.css">
+    <link rel="stylesheet" href="styles/buttons.css">
+
     <link rel="icon" type="image/x-icon" href="images/8.svg.svg">
   </head>
-  <body>
+  <body class="comment-processed">
     <?php if($comment_posted == true) : ?>
-      <p>Comment submitted!</p>
+      <h2>Comment submitted!</h2>
       <br>
-      <p>User: <strong><?= $_SESSION['username'] ?></strong></p>
-      <p>Comment:<?= $comment ?></p>
-      <p><a href="dashboard.php">Go back to Dashboard</a></p>
+      <p class="user">User: <strong><?= $_SESSION['username'] ?></strong></p>
+      <p class="playlist-content">Comment:<?= $comment ?></p>
+      <p><a class="button" href="dashboard.php">Go back to Dashboard</a></p>
     <?php else :?>
       <p><?= $error ?></p>
     <?php endif ?>  

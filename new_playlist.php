@@ -1,32 +1,69 @@
 <?php
 require('connect.php');
-
 session_start();
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
   header("Location: index.html");
   exit();
 }
 
-if ($_POST && !empty($_POST['name']) && !empty($_POST['description'])) {
-  $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-  $description = filter_input(INPUT_POST, 'description', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-  
-  $query = "INSERT INTO playlists (user_id, name, description) VALUES ($_SESSION[user_id],:name, :description)";
-  $statement = $pdo->prepare($query);
+$error = '';
 
-  $statement->bindValue(':name', $name);
-  $statement->bindValue(':description', $description);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
+    $description = filter_input(INPUT_POST, 'description', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
 
-  $posted = false;
+    $imagePath = null;
 
-  if($statement->execute()){
-    $posted = true;
-  }
+    if (!empty($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
+        if ($_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $maxBytes = 2 * 1024 * 1024;
+            if ($_FILES['image']['size'] > $maxBytes) {
+                $error = 'Image too large (max 2MB).';
+            } else {
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mime = $finfo->file($_FILES['image']['tmp_name']);
+                $ext = null;
+                if ($mime === 'image/jpeg') $ext = 'jpg';
+                elseif ($mime === 'image/png') $ext = 'png';
+                elseif ($mime === 'image/webp') $ext = 'webp';
+
+                if ($ext === null) {
+                    $error = 'Unsupported image type. Use JPG, PNG or WEBP.';
+                } else {
+                    $uploadDir = __DIR__ . '/uploads/playlist_images';
+                    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+                    $filename = bin2hex(random_bytes(8)) . '.' . $ext;
+                    $dest = $uploadDir . '/' . $filename;
+                    if (!move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
+                        $error = 'Failed to move uploaded file.';
+                    } else {
+                        $imagePath = 'uploads/playlist_images/' . $filename;
+                    }
+                }
+            }
+        } else {
+            $error = 'Upload error.';
+        }
+    }
+
+    if ($error === '') {
+        $query = "INSERT INTO playlists (user_id, name, description, image) VALUES (:user_id, :name, :description, :image)";
+        $statement = $pdo->prepare($query);
+        $statement->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+        $statement->bindValue(':name', $name);
+        $statement->bindValue(':description', $description);
+        $statement->bindValue(':image', $imagePath);
+        if ($statement->execute()) {
+            header("Location: dashboard.php");
+            exit();
+        } else {
+            $error = 'Database insert failed.';
+        }
+    }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,24 +83,27 @@ if ($_POST && !empty($_POST['name']) && !empty($_POST['description'])) {
             <p>You have successfully logged in as: <strong><?=$_SESSION['role']?></strong></p>
         </div>
         <div class="header-nav">
-            <a href="dashboard.php">Back</a>
-            <a href="logout.php">Logout</a>  
+            <a class="button" href="dashboard.php">Back</a>
+            <a class="button" href="logout.php">Logout</a>  
         </div>
     </header>
 
   
   <div id="login-body">
     <div class="login-panel">
+      <br>
       <h2>Create a Playlist</h2>
-      <form method="post" action="new_playlist.php">
-        <input type="text" id="name" name="name" placeholder="Playlist Name">
-        <input type="text" id="description" name="description" placeholder="Description">
-        <input type="submit" value="Create"></button>
+      <br>
+      <?php if ($error): ?><p class="error"><?=htmlspecialchars($error)?></p><?php endif; ?>
+      <form class="edit-form" method="post" action="new_playlist.php" enctype="multipart/form-data">
+        <input class="text-input" type="text" id="name" name="name" placeholder="Playlist Name" required>
+        <input class="text-input" type="text" id="description" name="description" placeholder="Description" required>
+        <label>
+          Playlist image (optional):
+          <input type="file" name="image" accept="image/jpeg,image/png,image/webp">
+        </label>
+        <input class="button" type="submit" value="Create">
       </form>
-      <?php if (isset($posted) && $posted == true) {
-        header("Location: dashboard.php");
-      } 
-      ?>
     </div>
   </div>
 </body>
