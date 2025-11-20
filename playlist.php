@@ -83,8 +83,7 @@ if (isset($_POST['delete'])) {
                 <p><?=$row['description']?></p>
             </div>
         </div>
-        
-       
+    
         <br>
 
         <p>Add songs at the bottom of the page</p>
@@ -110,7 +109,6 @@ if (isset($_POST['delete'])) {
                     </option>
                 <?php endforeach; ?>
             </select>
-
 
             <?php
               $selected_num = $_POST['no-of-results'] ?? ' LIMIT 10';
@@ -187,13 +185,12 @@ if (isset($_POST['delete'])) {
             </ul>
         <?php endif ?>
         <form method="post"><input class="delete-button" type="submit" value="Delete Playlist" name="delete"></form>
+
         <a class="button" href="edit_playlist.php?id=<?= $id ?>">Edit</a>
         <form method="post" action="process_comment.php">
             <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" name="comment"></textarea>
             <input type="submit" class="button">
         </form>
-
-        
 
         <script>
             (function(){

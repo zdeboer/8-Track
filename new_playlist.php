@@ -104,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <input class="button" type="submit" value="Create">
       </form>
-     
     </div>
   </div>
 </body>
