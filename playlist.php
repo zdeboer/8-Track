@@ -167,7 +167,7 @@ if (isset($_POST['delete'])) {
                 <div id="spotify-results"></div>
             </div>
         <?php else: ?>
-            <ul class="add-results">
+            <ul>
                 <p>No songs.</p>
             </ul>
             <h2>Add Songs: </h2>
@@ -181,9 +181,11 @@ if (isset($_POST['delete'])) {
                 <div id="spotify-results"></div>
             </ul>
         <?php endif ?>
-        <form method="post"><input class="delete-button" type="submit" value="Delete Playlist" name="delete"></form>
+        <form method="post"><input class="delete-button" type="submit" value="Delete Playlist" name="delete">
+            <a class="button" href="edit_playlist.php?id=<?= $id ?>">Edit</a>
+        </form>
 
-        <a class="button" href="edit_playlist.php?id=<?= $id ?>">Edit</a>
+        
         <form method="post" action="process_comment.php">
             <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" name="comment"></textarea>
             <input type="submit" class="button">
