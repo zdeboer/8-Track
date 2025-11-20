@@ -177,6 +177,5 @@ if (isset($_POST['delete'])) {
     <?php else: ?>
         <p>No user selected. <a href="dashboard.php">Back</a></p>
     <?php endif ?>
-
 </body>
 </html>
