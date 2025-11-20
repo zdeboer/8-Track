@@ -167,7 +167,7 @@ if (isset($_POST['delete'])) {
                 <div id="spotify-results"></div>
             </div>
         <?php else: ?>
-            <ul>
+            <ul class="add-results">
                 <p>No songs.</p>
             </ul>
             <h2>Add Songs: </h2>
