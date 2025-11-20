@@ -156,11 +156,8 @@ if (isset($_POST['delete'])) {
                 </li>
             <?php endwhile ?>
             </ul>
-
             <br><br>
-            
             <h2>Add Songs: </h2>
-
             <form id="spotify-search-form">
                 <input id="spotify-search-input" name="q" type="search" placeholder="Search to add songs">
                 <button class="button" type="submit">Search</button>
