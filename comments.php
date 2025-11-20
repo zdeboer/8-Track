@@ -67,8 +67,6 @@ $statement->execute();
             <input class="button" type="submit" value="Filter" id="filter-button">
         </form>
 
-        
-
         <?php if($statement->rowCount() > 0): ?>
             <ul>
             <?php while($row = $statement->fetch()): ?>

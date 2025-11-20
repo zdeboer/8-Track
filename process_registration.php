@@ -29,8 +29,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "Registration successful! You can now <a href='index.html'>log in</a>.";
         }
 
-        
-
     } catch (PDOException $e) {
         if ($e->getCode() == 23000) {
             echo "Error: Username or Email already exists. Please choose another.";

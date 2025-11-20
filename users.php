@@ -67,9 +67,6 @@ $statement->execute();
             <input class="button" type="submit" value="Filter" id="filter-button">
             <a style="float:right" href="comments.php" class="button">Comments</a>
         </form>
-
-        
-
         <?php if($statement->rowCount() > 0): ?>
             <ul>
             <?php while($row = $statement->fetch()): ?>

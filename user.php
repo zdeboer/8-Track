@@ -69,8 +69,6 @@ if (isset($_POST['delete'])) {
             <form method="post"><input class="delete-button" type="submit" value="Delete" name="delete"></form>
             <a class="button" href="edit_user.php?id=<?= $row['id'] ?>">Edit User</a>
           </div>
-          
-
       </div>
     <?php else: ?>
       <p>User not found.</p>
@@ -102,7 +100,6 @@ if (isset($_POST['delete'])) {
             <ul>
                 <p>No playlists.</p>
             </ul>
-            
         <?php endif ?>
 </body>
 </html>
