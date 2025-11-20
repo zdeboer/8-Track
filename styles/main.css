@@ -112,3 +112,12 @@ img {
     height: 100vh;
 }
 
+.playlist-page {
+    display: flex;
+    flex-direction: row;
+    max-height: 115px;
+}
+
+.playlist-info-page {
+    margin-left: 15px;
+}

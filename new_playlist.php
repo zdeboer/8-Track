@@ -98,10 +98,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <form class="edit-form" method="post" action="new_playlist.php" enctype="multipart/form-data">
         <input class="text-input" type="text" id="name" name="name" placeholder="Playlist Name" required>
         <input class="text-input" type="text" id="description" name="description" placeholder="Description" required>
-        <label>
-          Playlist image (optional):
-          <input type="file" name="image" accept="image/jpeg,image/png,image/webp">
-        </label>
+        <label>Playlist image (optional):</label>
+          
+        <input type="file" name="image" accept="image/jpeg,image/png,image/webp">
+        
         <input class="button" type="submit" value="Create">
       </form>
     </div>

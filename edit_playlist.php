@@ -3,67 +3,111 @@ require('connect.php');
 require('authenticate.php');
 
 if (isset($_POST['delete'])) {
-    $id = $_POST['id'];
+    $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+    $stmt = $pdo->prepare("SELECT image FROM playlists WHERE id = :id");
+    $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+    $stmt->execute();
+    $currentImage = $stmt->fetchColumn();
+
+    if ($currentImage) {
+        $filePath = __DIR__ . '/' . $currentImage;
+        if (is_file($filePath)) {
+            @unlink($filePath);
+        }
+    }
+
     $statement = $pdo->prepare("DELETE FROM playlists WHERE id = :id");
-    $statement->bindValue(":id", $id);
+    $statement->bindValue(":id", $id, PDO::PARAM_INT);
     if ($statement->execute()) {
         header("Location: dashboard.php");
+        exit;
     }
 } else if ($_POST && isset($_POST['name']) && isset($_POST['description']) && isset($_POST['id'])) {
     $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $description = filter_input(INPUT_POST, 'description', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
 
-    if($_POST['delete-image'] === true) {
-      $imagePath = NULL;
-    } else {
-      if (!empty($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
-          if ($_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $maxBytes = 2 * 1024 * 1024;
-            if ($_FILES['image']['size'] > $maxBytes) {
-                $error = 'Image too large (max 2MB).';
-            } else {
-              $finfo = new finfo(FILEINFO_MIME_TYPE);
-              $mime = $finfo->file($_FILES['image']['tmp_name']);
-              $ext = null;
-              if ($mime === 'image/jpeg') $ext = 'jpg';
-              elseif ($mime === 'image/png') $ext = 'png';
-              elseif ($mime === 'image/webp') $ext = 'webp';
+    $stmt = $pdo->prepare("SELECT image FROM playlists WHERE id = :id");
+    $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+    $stmt->execute();
+    $currentImage = $stmt->fetchColumn();
 
-              if ($ext === null) {
-                $error = 'Unsupported image type. Use JPG, PNG or WEBP.';
-              } else {
-                $uploadDir = __DIR__ . '/uploads/playlist_images';
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+    $error = null;
+    $imagePath = $currentImage;
 
-                $filename = bin2hex(random_bytes(8)) . '.' . $ext;
-                $dest = $uploadDir . '/' . $filename;
-                if (!move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
-                    $error = 'Failed to move uploaded file.';
-                } else {
-                    $imagePath = 'uploads/playlist_images/' . $filename;
-                }
-              }
+    if (isset($_POST['delete-image']) && $_POST['delete-image']) {
+        if ($currentImage) {
+            $filePath = __DIR__ . '/' . $currentImage;
+            if (is_file($filePath)) {
+                @unlink($filePath);
             }
-        } else {
-            $error = 'Upload error.';
         }
-      }
+        $imagePath = null;
+    } else {
+        if (!empty($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
+            if ($_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $maxBytes = 2 * 1024 * 1024;
+                if ($_FILES['image']['size'] > $maxBytes) {
+                    $error = 'Image too large (max 2MB).';
+                } else {
+                    $finfo = new finfo(FILEINFO_MIME_TYPE);
+                    $mime = $finfo->file($_FILES['image']['tmp_name']);
+                    $ext = null;
+                    if ($mime === 'image/jpeg') $ext = 'jpg';
+                    elseif ($mime === 'image/png') $ext = 'png';
+                    elseif ($mime === 'image/webp') $ext = 'webp';
+
+                    if ($ext === null) {
+                        $error = 'Unsupported image type. Use JPG, PNG or WEBP.';
+                    } else {
+                        $uploadDir = __DIR__ . '/uploads/playlist_images';
+                        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+                        $filename = bin2hex(random_bytes(8)) . '.' . $ext;
+                        $dest = $uploadDir . '/' . $filename;
+                        if (!move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
+                            $error = 'Failed to move uploaded file.';
+                        } else {
+                            if ($currentImage) {
+                                $oldPath = __DIR__ . '/' . $currentImage;
+                                if (is_file($oldPath)) {
+                                    @unlink($oldPath);
+                                }
+                            }
+                            $imagePath = 'uploads/playlist_images/' . $filename;
+                        }
+                    }
+                }
+            } else {
+                $error = 'Upload error.';
+            }
+        }
     }
-    
-    
 
-    $query = "UPDATE playlists SET name = :name, description = :description, image = :image WHERE id = :id";
-    $statement = $pdo->prepare($query);
-    $statement->bindValue(':name', $name);        
-    $statement->bindValue(':description', $description);
-    $statement->bindValue(':image', $imagePath);
-    $statement->bindValue(':id', $id, PDO::PARAM_INT);
+    if (!$error) {
+        $query = "UPDATE playlists SET name = :name, description = :description, image = :image WHERE id = :id";
+        $statement = $pdo->prepare($query);
+        $statement->bindValue(':name', $name);
+        $statement->bindValue(':description', $description);
+        if ($imagePath === null) {
+            $statement->bindValue(':image', null, PDO::PARAM_NULL);
+        } else {
+            $statement->bindValue(':image', $imagePath);
+        }
+        $statement->bindValue(':id', $id, PDO::PARAM_INT);
 
-    $statement->execute();
+        $statement->execute();
 
-    header("Location: playlist.php?id=$id");
-    exit;
+        header("Location: playlist.php?id=$id");
+        exit;
+    } else {
+        $query = "SELECT * FROM playlists WHERE id = :id";
+        $statement = $pdo->prepare($query);
+        $statement->bindValue(':id', $id, PDO::PARAM_INT);
+        $statement->execute();
+        $row = $statement->fetch();
+    }
 } else if (isset($_GET['id'])) {
     $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
 
@@ -102,22 +146,32 @@ if (isset($_POST['delete'])) {
         </div>
     </header>
     <?php if ($id): ?>
-    <form class="edit-form" method="post">
+    <form class="edit-form" method="post" enctype="multipart/form-data">
         <input type="hidden" name="id" value="<?= $row['id'] ?>">
         
         <label for="name">Playlist Name</label>
-        <input class="text-input" id="name" name="name" value="<?= $row['name'] ?>">
+        <input class="text-input" id="name" name="name" value="<?= htmlspecialchars($row['name'] ?? '', ENT_QUOTES) ?>">
         <label for="description">Description</label>
-        <input class="text-input" id="description" name="description" value="<?= $row['description'] ?>">
+        <input class="text-input" id="description" name="description" value="<?= htmlspecialchars($row['description'] ?? '', ENT_QUOTES) ?>">
 
         <label>
           Playlist image (optional):
-          <input type="file" name="image" accept="image/jpeg,image/png,image/webp" value="<?= $row['image'] ?>">
+          <input type="file" name="image" accept="image/jpeg,image/png,image/webp">
         </label>
-        <label for="delete-image">Delete image?</label>
-        <input name="delete-image" type="checkbox">
+        <?php if(!empty($row['image'])): ?>
+            <p>Current image: <img src="<?= htmlspecialchars($row['image'], ENT_QUOTES) ?>" alt="playlist image" style="max-height:80px;"></p>
+        <?php endif ?>
 
+        <?php if($row['image'] !== NULL): ?>
+          <label for="delete-image">Delete image?</label>
+          <input style="float:left; display:inline; width:15px;" id="delete-image" name="delete-image" type="checkbox" value="1">
+        <?php endif ?>
         
+        
+
+        <?php if (!empty($error)): ?>
+            <p class="error"><?= htmlspecialchars($error) ?></p>
+        <?php endif ?>
         
         <input class="button" type="submit" name="submit" value="submit">
         <input class="button" type="submit" name="delete" value="delete">
@@ -126,7 +180,5 @@ if (isset($_POST['delete'])) {
         <p>No user selected. <a href="dashboard.php">Back</a></p>
     <?php endif ?>
 
-    <!-- Remember that alternative syntax is good and html inside php is bad -->
-    
 </body>
 </html>

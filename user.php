@@ -88,7 +88,7 @@ if (isset($_POST['delete'])) {
             <?php while($row = $statement->fetch()): ?>
                 <li class="playlist">
                     <div class="img-container">
-                        <img src="<?= htmlspecialchars($row['image'] ?? 'images/placeholder.png') ?>">
+                        <img src="<?= htmlspecialchars($row['image'] ?? 'images/placeholder.png') ?>" alt="#">
                     </div>
                     <div class="playlist-info">
                         <p class="playlist-title"><a href="playlist.php?id=<?=$row['id']?>"><?= $row['name'] ?></a></p>

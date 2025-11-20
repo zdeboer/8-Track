@@ -66,8 +66,17 @@ if (isset($_POST['delete'])) {
         </div>
     </header>
     <main>
-        <h2><?=$row['name']?></h2>
-        <p><?=$row['description']?></p>
+        <div class="playlist-page">
+            <div class="img-container">
+                <img style="height: 115px;" src="<?= htmlspecialchars($row['image'] ?? 'images/placeholder.png') ?>" alt="#">
+            </div>
+            <div class="playlist-info-page">
+                <h2><?=$row['name']?></h2>
+                <br>
+                <p><?=$row['description']?></p>
+            </div>
+        </div>
+        
        
         <br>
 
