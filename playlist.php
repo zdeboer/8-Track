@@ -60,8 +60,15 @@ if (isset($_POST['delete'])) {
             <h2>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
             <p>You have successfully logged in as: <strong><?=$_SESSION['role']?></strong></p>
         </div>
+        <?php 
+            if($row['user_id'] != $_SESSION['user_id']) {
+                $redirect = "user.php?=$row[user_id]";
+            } else {
+                $redirect = "dashboard.php";
+            }
+        ?>
         <div class="header-nav">
-            <a class="button" href="dashboard.php">Back</a>
+            <a class="button" href=<?= $redirect ?>>Back</a>
             <a class="button" href="logout.php">Logout</a>  
         </div>
     </header>
