@@ -166,8 +166,6 @@ if (isset($_POST['delete'])) {
           <label for="delete-image">Delete image?</label>
           <input style="float:left; display:inline; width:15px;" id="delete-image" name="delete-image" type="checkbox" value="1">
         <?php endif ?>
-        
-        
 
         <?php if (!empty($error)): ?>
             <p class="error"><?= htmlspecialchars($error) ?></p>

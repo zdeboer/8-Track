@@ -85,8 +85,5 @@ if (isset($_POST['delete'])) {
     <?php else: ?>
         <p>No user selected. <a href="users.php">Back</a></p>
     <?php endif ?>
-
-    <!-- Remember that alternative syntax is good and html inside php is bad -->
-    
 </body>
 </html>

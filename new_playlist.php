@@ -88,7 +88,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </header>
 
-  
   <div id="login-body">
     <div class="login-panel">
       <br>
