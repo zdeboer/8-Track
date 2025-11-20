@@ -62,7 +62,7 @@ if (isset($_POST['delete'])) {
         </div>
         <?php 
             if($row['user_id'] != $_SESSION['user_id']) {
-                $redirect = "user.php?=$row[user_id]";
+                $redirect = "user.php?id=$row[user_id]";
             } else {
                 $redirect = "dashboard.php";
             }
