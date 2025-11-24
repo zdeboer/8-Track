@@ -112,6 +112,15 @@ img {
     height: 100vh;
 }
 
+#comment {
+    color: white;
+    background-color: #0f0f0f;
+    border: none;
+    border-radius: 16px;
+    padding: 8px;
+    font-size: 1.07em;
+}
+
 .playlist-page {
     display: flex;
     flex-direction: row;
