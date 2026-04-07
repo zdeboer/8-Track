@@ -1,98 +1,95 @@
 @font-face {
-    font-family: "SF-Pro";
-    src: url("fonts/SF-Pro-Display-Regular.ttf") format("truetype");
+  font-family: 'SF-Pro';
+  src: url('fonts/SF-Pro-Display-Regular.ttf') format('truetype');
 }
 
 * {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 html {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    min-width: 1000px;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  min-width: 600px;
 }
 
 body {
-    font-family: "SF-Pro";
-    background-color: #1f1f1f;
-    color: white;
+  font-family: 'SF-Pro';
+  background-color: #1f1f1f;
+  color: white;
 }
 
 main {
-    margin: 24px;
-    margin-bottom: 0;
-    height: 88vh;
+  margin: 24px;
+  margin-bottom: 0;
+  height: 88vh;
 }
 
 main h2 {
-    font-size: 1.8em;
+  font-size: 1.8em;
 }
 
-main form, ul {
-    margin: 18px;
+main form,
+ul {
+  margin: 18px;
 }
-
-
-
-
 
 .track,
 .playlist {
-    display: flex;
-    height: 75px;
+  display: flex;
+  height: 75px;
 }
 
-.img-container {
-    height: 100%;
+.img-container,
+.placeholder-img-container {
+  height: 100%;
 }
 
 img {
-    max-height: 100%;
-    border-radius: 10px;
-    aspect-ratio: 1/1;
-    
+  max-height: 100%;
+  border-radius: 10px;
+  aspect-ratio: 1/1;
 }
 
 .track-info,
 .playlist-info {
-    margin-left: 15px;
-    width: 80%;
+  margin-left: 15px;
+  width: 80%;
 }
 
 .playlist-title a,
 .username a,
 .track-title {
-    text-decoration: none;
-    color: white;
-    font-weight: bold;
-    font-size: 1.3em;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    width: 80%;
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  font-size: 1.3em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 80%;
 }
 
 .playlist-title,
 .track-title,
 .username {
-    margin-bottom: 2px;
+  margin-bottom: 2px;
 }
 
 .username {
-    font-size: 1.3em;
-    color: white;
+  font-size: 1.3em;
+  color: white;
 }
 
 .user {
-    font-size: 1.3em;
-    color: white;
+  font-size: 1.3em;
+  color: white;
 }
 
 .playlist-title a:hover,
 .username:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 .playlist-content,
@@ -102,31 +99,42 @@ img {
 .user-date-joined,
 .artist,
 .track-timestamp {
-    font-size: 1em;
-    color: rgb(175, 175, 175);
+  font-size: 1em;
+  color: rgb(175, 175, 175);
 }
 
 .comment-processed {
-    display: grid;
-    place-items: center;
-    height: 100vh;
+  display: grid;
+  place-items: center;
+  height: 100vh;
 }
 
 #comment {
-    color: white;
-    background-color: #0f0f0f;
-    border: none;
-    border-radius: 16px;
-    padding: 8px;
-    font-size: 1.07em;
+  color: white;
+  background-color: #0f0f0f;
+  border: none;
+  border-radius: 16px;
+  padding: 8px;
+  font-size: 1.07em;
 }
 
 .playlist-page {
-    display: flex;
-    flex-direction: row;
-    max-height: 115px;
+  display: flex;
+  flex-direction: row;
+  max-height: 115px;
 }
 
 .playlist-info-page {
-    margin-left: 15px;
+  margin-left: 15px;
+}
+
+.filter-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#playlist-list {
+  margin-top: 0;
 }

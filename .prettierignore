@@ -1,0 +1,8 @@
+node_modules
+vendor
+uploads
+uploads/**
+
+# If you add build artifacts later
+storybook-static
+dist

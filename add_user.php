@@ -23,10 +23,10 @@
     </header>
     <form class="edit-form" action="process_registration.php" method="post">
         <label for="username">Username</label>
-        <input class="text-input" id="username" name="username">
+        <input class="text-input" id="username" name="username" required>
 
         <label for="email">Email</label>
-        <input class="text-input" id="email" name="email">
+        <input class="text-input" id="email" name="email" required>
 
         <label for="role">Role</label>
         <select name="role" id="role">

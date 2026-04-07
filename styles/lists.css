@@ -1,23 +1,27 @@
 ul {
-    padding: 12px;
-    margin-bottom: 0;
-    background-color: #0f0f0f;
-    border-radius: 24px;
-    list-style: none;
+  padding: 12px;
+  margin-bottom: 0;
+  background-color: #0f0f0f;
+  border-radius: 24px;
+  list-style: none;
 }
 
 li,
 .user-standalone {
-    background-color: #1f1f1f;
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 10px;
+  background-color: #1f1f1f;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 10px;
+}
+
+li:last-of-type {
+  margin-bottom: 0px;
 }
 
 .add-results {
-    padding: 12px;
-    margin-bottom: 0;
-    background-color: #0f0f0f;
-    border-radius: 24px;
-    list-style: none;
+  padding: 12px;
+  margin-bottom: 0;
+  background-color: #0f0f0f;
+  border-radius: 24px;
+  list-style: none;
 }

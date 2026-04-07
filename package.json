@@ -1,5 +1,16 @@
 {
+  "private": true,
+  "scripts": {
+    "format": "prettier \"**/*.{css,html,js,json,md,yml,yaml}\" --write",
+    "format:check": "prettier \"**/*.{css,html,js,json,md,yml,yaml}\" --check",
+    "prepare": "husky"
+  },
   "dependencies": {
     "bootstrap": "^5.3.8"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1"
   }
 }

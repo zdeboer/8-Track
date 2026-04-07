@@ -83,11 +83,7 @@ $statement->execute();
             </ul>
         <?php else: ?>
             <p>No users on platform.</p>
-        <?php endif ?>  
-        <form method="post" action="process_comment.php">
-            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" name="comment"></textarea>
-            <input type="submit" class="button">
-        </form>      
+        <?php endif ?>      
     </main>
 </body>
 </html>

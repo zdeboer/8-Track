@@ -61,6 +61,10 @@ if ($genre === '') {
 try {
     $stmt = $pdo->prepare('INSERT INTO playlist_tracks (playlist_id, spotify_track_id, title, artist, album_image, genre, added_by, added_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())');
     $stmt->execute([$playlist_id, $spotify_track_id, $title, $artist, $album_image, $genre, $_SESSION['user_id']]);
+
+    $up = $pdo->prepare('UPDATE playlists SET updated_at = NOW() WHERE id = ?');
+    $up->execute([$playlist_id]);
+
     echo json_encode(['ok' => true, 'genre' => $genre]);
 } catch (\PDOException $e) {
     http_response_code(500);

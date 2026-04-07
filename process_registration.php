@@ -4,8 +4,8 @@ require 'connect.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-    $password = $_POST['password'];
-    $retype_password = $_POST['retype-password'];
+    $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_SPECIAL_CHARS);
+    $retype_password = filter_input(INPUT_POST, 'retype-password', FILTER_SANITIZE_SPECIAL_CHARS);
 
     if (empty($username) || empty($email) || empty($password)) {
         die("Please fill in all fields.");

@@ -18,17 +18,20 @@ $allowed = [
 $selected_value = $_POST['filter'] ?? 'updated_at DESC';
 $filter = in_array($selected_value, $allowed, true) ? $selected_value : 'updated_at DESC';
 
-// fetch playlists for current user (safe param)
-$query = "SELECT id, name, description, image, created_at, updated_at FROM playlists WHERE user_id = :uid ORDER BY $filter";
+// fetch playlists joined with owner username
+$query = "SELECT playlists.id, playlists.name, playlists.description, playlists.image, playlists.created_at, playlists.updated_at, users.username
+          FROM playlists
+          INNER JOIN users ON playlists.user_id = users.id
+          ORDER BY $filter";
 $statement = $pdo->prepare($query);
-$statement->execute([':uid' => $_SESSION['user_id']]);
+$statement->execute();
 $playlists = $statement->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home Page</title>
+    <title>Discover Playlists</title>
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/header.css">
     <link rel="stylesheet" href="styles/buttons.css">
@@ -39,14 +42,14 @@ $playlists = $statement->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <header>
         <div class="header-user-info">
-            <h2>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
-            <p>You have successfully logged in as: <strong><?=$_SESSION['role']?></strong></p>
+            <h2>Welcome, <?= htmlspecialchars($_SESSION['username']) ?>!</h2>
+            <p>You have successfully logged in as: <strong><?= htmlspecialchars($_SESSION['role']) ?></strong></p>
         </div>
         <div class="header-nav">
             <?php if($_SESSION['role'] == 'admin') :?>
             <a class="button" href="users.php">User Admin Page</a>
             <?php endif ?>
-            <?php if($_SESSION['user_id'] == "GUEST") : ?>
+            <?php if($_SESSION['user_id'] == "GUEST"): ?>
             <a class="button" href="index.html">Log In</a>
             <?php else: ?>
             <a class="button" href="logout.php">Logout</a>
@@ -54,14 +57,18 @@ $playlists = $statement->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </header>
     <main>
-        <h2>Your Library</h2>
+        <h2>Discover</h2>
+
         <br>
+        
         <a class="button" href="songs.php">All Songs</a>
-        <a class="button" href="all_playlists.php">Discover</a>
-        <a class="button" href="new_playlist.php">Create playlist</a>
+        
+        <?php if(isset($_SESSION['user_id']) && $_SESSION['user_id'] !== "GUEST") : ?>
+        <a class="button" href="dashboard.php">Your Library</a>
+        <?php endif ?>
 
         <div class="filter-header">
-            <form class="filter-form" action="dashboard.php" method="post">
+            <form action="all_playlists.php" method="post">
                 <?php
                 $options = [
                     'created_at DESC' => 'Created At',
@@ -82,7 +89,7 @@ $playlists = $statement->fetchAll(PDO::FETCH_ASSOC);
             </form>
             <div id="playlist-search-root"></div>
         </div>
-        <!-- server-rendered playlist list (will be replaced client-side when searching) -->
+        <!-- server rendered list (will be replaced by search results) -->
         <?php if(count($playlists) > 0): ?>
             <ul id="playlist-list">
             <?php foreach($playlists as $row): ?>
@@ -91,7 +98,10 @@ $playlists = $statement->fetchAll(PDO::FETCH_ASSOC);
                         <img src="<?= htmlspecialchars($row['image'] ?? 'images/placeholder.png') ?>" alt="">
                     </div>
                     <div class="playlist-info">
-                        <p class="playlist-title"><a href="playlist.php?id=<?=$row['id']?>"><?= htmlspecialchars($row['name']) ?></a></p>
+                        <p class="playlist-title">
+                            <a href="playlist.php?id=<?= $row['id'] ?>"><?= htmlspecialchars($row['name']) ?></a>
+                            • <?= htmlspecialchars($row['username']) ?>
+                        </p>
                         <p class="playlist-content"><?= htmlspecialchars($row['description']) ?></p>
                         <p class="playlist-timestamp"><?= date("M d y", strtotime($row['created_at'])) ?></p>
                     </div>
@@ -101,7 +111,6 @@ $playlists = $statement->fetchAll(PDO::FETCH_ASSOC);
         <?php else: ?>
             <p id="no-playlists">No playlists.</p>
         <?php endif ?>
-        <br><br>
 
         <!-- expose playlists to JS safely -->
         <script>
@@ -116,46 +125,6 @@ $playlists = $statement->fetchAll(PDO::FETCH_ASSOC);
         <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // helper to render playlist array into the existing UL
-        function renderPlaylistList(list) {
-          const ul = document.getElementById('playlist-list');
-          const noEl = document.getElementById('no-playlists');
-          if ((!list || list.length === 0) && noEl) {
-            if (ul) ul.remove();
-            return;
-          }
-          // ensure UL exists
-          let container = ul;
-          if (!container) {
-            container = document.createElement('ul');
-            container.id = 'playlist-list';
-            // append after search root
-            const root = document.getElementById('playlist-search-root');
-            root.insertAdjacentElement('afterend', container);
-          }
-          // build HTML
-          container.innerHTML = list.map(p => {
-            const img = p.image ? p.image : 'images/placeholder.png';
-            const name = escapeHtml(p.name || '');
-            const desc = escapeHtml(p.description || '');
-            const created = p.created_at ? new Date(p.created_at).toLocaleDateString(undefined, { month:'short', day:'2-digit', year:'2-digit' }) : '';
-            return `
-              <li class="playlist">
-                <div class="img-container">
-                  <img src="${escapeHtml(img)}" alt="">
-                </div>
-                <div class="playlist-info">
-                  <p class="playlist-title"><a href="playlist.php?id=${encodeURIComponent(p.id)}">${name}</a></p>
-                  <p class="playlist-content">${desc}</p>
-                  <p class="playlist-timestamp">${created}</p>
-                </div>
-              </li>
-            `;
-          }).join('');
-          // remove "No playlists." paragraph if present
-          if (noEl) noEl.remove();
-        }
-
         function escapeHtml(s) {
           return String(s || '')
             .replace(/&/g, '&amp;')
@@ -163,6 +132,43 @@ $playlists = $statement->fetchAll(PDO::FETCH_ASSOC);
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+        }
+
+        // render playlist array into the existing UL
+        function renderPlaylistList(list) {
+          const ul = document.getElementById('playlist-list');
+          const noEl = document.getElementById('no-playlists');
+          if ((!list || list.length === 0) && noEl) {
+            if (ul) ul.remove();
+            return;
+          }
+          let container = ul;
+          if (!container) {
+            container = document.createElement('ul');
+            container.id = 'playlist-list';
+            const root = document.getElementById('playlist-search-root');
+            root.insertAdjacentElement('afterend', container);
+          }
+          container.innerHTML = list.map(p => {
+            const img = p.image ? p.image : 'images/placeholder.png';
+            const name = p.name || '';
+            const desc = p.description || '';
+            const owner = p.username || '';
+            const created = p.created_at ? new Date(p.created_at).toLocaleDateString(undefined, { month:'short', day:'2-digit', year:'2-digit' }) : '';
+            return `
+              <li class="playlist">
+                <div class="img-container">
+                  <img src="${escapeHtml(img)}" alt="">
+                </div>
+                <div class="playlist-info">
+                  <p class="playlist-title"><a href="playlist.php?id=${encodeURIComponent(p.id)}">${name}</a> • ${owner}</p>
+                  <p class="playlist-content">${desc}</p>
+                  <p class="playlist-timestamp">${created}</p>
+                </div>
+              </li>
+            `;
+          }).join('');
+          if (noEl) noEl.remove();
         }
 
         function PlaylistSearch({ initialPlaylists = [] }) {
@@ -173,20 +179,18 @@ $playlists = $statement->fetchAll(PDO::FETCH_ASSOC);
             return () => clearTimeout(t);
           }, [query]);
 
-          // compute results client-side
           const results = useMemo(() => {
             if (!debounced) return [];
             const q = debounced.toLowerCase();
             return initialPlaylists.filter(p =>
               (p.name||'').toLowerCase().includes(q) ||
-              (p.description||'').toLowerCase().includes(q)
+              (p.description||'').toLowerCase().includes(q) ||
+              (p.username||'').toLowerCase().includes(q)
             );
           }, [debounced, initialPlaylists]);
 
-          // when debounced changes, update DOM list: show results if query non-empty, otherwise restore initial list
           useEffect(() => {
             if (!debounced) {
-              // restore original
               renderPlaylistList(initialPlaylists);
             } else {
               renderPlaylistList(results);
@@ -202,19 +206,18 @@ $playlists = $statement->fetchAll(PDO::FETCH_ASSOC);
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 aria-label="Search playlists"
-                />
+              />
             </div>
           );
         }
 
-        // mount and initialize list (ensures initial HTML and JS state are consistent)
+        // mount immediately
         const init = window.INIT_PLAYLISTS || [];
-        // keep server-rendered markup on first load; ensure global function can restore it later
         const rootEl = document.getElementById('playlist-search-root');
         if (rootEl) {
-        ReactDOM.createRoot(rootEl).render(
+          ReactDOM.createRoot(rootEl).render(
             <PlaylistSearch initialPlaylists={init} />
-        );
+          );
         }
         </script>
 

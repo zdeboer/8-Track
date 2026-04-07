@@ -1,0 +1,17 @@
+# Node
+node_modules/
+
+# PHP / Composer
+vendor/
+
+# User uploads
+uploads/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log

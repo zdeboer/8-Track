@@ -3,7 +3,6 @@ require('connect.php');
 require('spotify_config.php');
 require_once __DIR__ . '/src/SpotifyClient.php';
 
-
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -14,15 +13,33 @@ if (!isset($_SESSION['user_id'])) {
 if (isset($_POST['filter'])) {
     $filter = $_POST['filter'];
 } else {
-    $filter = "title ASC";
+    $filter = " added_at DESC";
 }
 
 if (isset($_POST['no-of-results'])) {
   $noOfResults = $_POST['no-of-results'];
 } else {
-  $noOfResults = "LIMIT 10";
+  $noOfResults = "";
 }
 
+$backFallback = 'dashboard.php';
+$backUrl = $backFallback;
+if (!empty($_SERVER['HTTP_REFERER'])) {
+    $refHost = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST);
+    $selfHost = $_SERVER['HTTP_HOST'];
+    if ($refHost === $selfHost) {
+        $refPath = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH) ?: '';
+        $refBase = basename($refPath); // e.g. "songs.php"
+        $currentBase = basename($_SERVER['PHP_SELF']); // current script basename
+        // files to ignore as referrers (processors, upload endpoints, or pages you don't want to use)
+        $ignored = ['process_comment.php', 'add_track.php', 'delete_track.php', 'upload.php'];
+        $isIgnored = in_array($refBase, $ignored, true) || preg_match('#^process_#', $refBase);
+        // also ignore if the referrer is this same page (filtering/pagination POST)
+        if (!$isIgnored && $refBase !== $currentBase) {
+            $backUrl = $_SERVER['HTTP_REFERER'];
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -44,11 +61,10 @@ if (isset($_POST['no-of-results'])) {
             <p>You have successfully logged in as: <strong><?=$_SESSION['role']?></strong></p>
         </div>
         <div class="header-nav">
-            
             <?php if($_SESSION['user_id'] == "GUEST") : ?>
               <a class="button" href="index.html">Log In</a>
             <?php else: ?>
-              <a class="button" href="dashboard.php">Back</a>
+              <a class="button" href="<?= htmlspecialchars($backUrl, ENT_QUOTES) ?>">Back</a>
               <a class="button" href="logout.php">Logout</a>
             <?php endif ?>
         </div>
@@ -56,16 +72,16 @@ if (isset($_POST['no-of-results'])) {
     <main>
         <h2>All Songs</h2>
         <p>Here is all the songs ever uploaded by all users on 8-Track</p>
-
         <br>
+        <a class="button" href="all_playlists.php">Discover</a>
+        <br><br>
         <?php if($_SESSION['user_id'] == "GUEST") : ?>
           <p style="color: red;">As a guest, you can only view the full songs list, register to create your own playlists.</p>
         <?php endif ?>
 
-        <form action="songs.php" method="post">
+        <form method="post">
             <?php
-            $selected_value = $_POST['filter'] ?? '';
-            
+            $selected_value = $_POST['filter'] ?? 'Recent';
 
             $options = [
                 'added_at DESC' => 'Recent',
@@ -83,10 +99,8 @@ if (isset($_POST['no-of-results'])) {
                     </option>
                 <?php endforeach; ?>
             </select>
-
-
             <?php
-              $selected_num = $_POST['no-of-results'] ?? ' LIMIT 10';
+              $selected_num = $_POST['no-of-results'] ?? '';
               $resultNum = [
                 ' LIMIT 10' => '10',
                 ' LIMIT 25' => '25',
@@ -105,7 +119,6 @@ if (isset($_POST['no-of-results'])) {
             </select>
             <input type="submit" class="button" id="filter-button" value="Filter">
         </form>
-
         <?php
         $query = "SELECT *
           FROM (
@@ -124,6 +137,9 @@ if (isset($_POST['no-of-results'])) {
 
         if($statement->rowCount() > 0): ?>
             <ul>
+                <?php if($noOfResults == ''): ?>
+                <li style="font-size: 18px; background: none; padding: 0; padding-left: 16px;"><strong>Results: <?= $statement->rowCount() ?></strong></li>
+                <?php endif ?>
             <?php while($row = $statement->fetch()): ?>
                 <li class="track">
                     <div class="img-container">
@@ -143,14 +159,8 @@ if (isset($_POST['no-of-results'])) {
                 <p>No songs.</p>
             </ul>
         <?php endif ?>
-        <form method="post" action="process_comment.php">
-            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" name="comment"></textarea>
-            <?php if($_SESSION['user_id'] == "GUEST"): ?>
-            <p class="button">Must sign in to leave comments</p>
-            <?php else: ?>
-            <input type="submit" class="button">
-            <?php endif ?>
-        </form>
+        <br><br>
     </main> 
+    
 </body>
 </html>

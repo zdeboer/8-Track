@@ -20,7 +20,7 @@ if (isset($_POST['filter'])) {
 if (isset($_POST['no-of-results'])) {
   $noOfResults = $_POST['no-of-results'];
 } else {
-  $noOfResults = "LIMIT 10";
+  $noOfResults = "";
 }
 
 $query = "SELECT * FROM playlists WHERE id = :id";
@@ -61,22 +61,49 @@ if (isset($_POST['delete'])) {
             <p>You have successfully logged in as: <strong><?=$_SESSION['role']?></strong></p>
         </div>
         <?php 
-            if($row['user_id'] != $_SESSION['user_id']) {
-                $redirect = "user.php?id=$row[user_id]";
+            if ($row['user_id'] != $_SESSION['user_id'] && $_SESSION['role'] != 'admin') {
+                $fallback = 'all_playlists.php';
+            } elseif ($row['user_id'] != $_SESSION['user_id']) {
+                $fallback = 'user.php?id=' . urlencode($row['user_id']);
             } else {
-                $redirect = "dashboard.php";
+                $fallback = 'dashboard.php';
             }
-        ?>
+        
+            $backUrl = $fallback;
+            if (!empty($_SERVER['HTTP_REFERER'])) {
+                $refHost = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST);
+                $selfHost = $_SERVER['HTTP_HOST'];
+                if ($refHost === $selfHost) {
+                    $refPath = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH) ?: '';
+                    $refBase = basename($refPath);
+                    $ignored = ['edit_playlist.php', 'playlist.php', 'process_comment.php', 'add_track.php', 'delete_track.php', 'upload.php', 'process_*'];
+                    $isIgnored = in_array($refBase, $ignored, true) || preg_match('#process_#', $refBase);
+                    if (!$isIgnored) {
+                        $backUrl = $_SERVER['HTTP_REFERER'];
+                    }
+                }
+            }
+            ?>
         <div class="header-nav">
-            <a class="button" href=<?= $redirect ?>>Back</a>
-            <a class="button" href="logout.php">Logout</a>  
+            <a class="button" href="<?= htmlspecialchars($backUrl, ENT_QUOTES) ?>">Back</a>
+            <?php if($_SESSION['user_id'] == "GUEST"): ?>
+            <a class="button" href="index.html">Log In</a>
+            <?php else: ?>
+            <a class="button" href="logout.php">Logout</a>
+            <?php endif ?>   
         </div>
     </header>
     <main>
         <div class="playlist-page">
+            <?php if($row['image'] != NULL): ?>
             <div class="img-container">
                 <img style="height: 115px;" src="<?= htmlspecialchars($row['image'] ?? 'images/placeholder.png') ?>" alt="#">
             </div>
+            <?php else: ?>
+            <div class="placeholder-img-container">
+                <img style="height: 115px;" src="images/placeholder.png" alt="#">
+            </div>
+            <?php endif ?>
             <div class="playlist-info-page">
                 <h2><?=$row['name']?></h2>
                 <br>
@@ -111,7 +138,7 @@ if (isset($_POST['delete'])) {
             </select>
 
             <?php
-              $selected_num = $_POST['no-of-results'] ?? ' LIMIT 10';
+              $selected_num = $_POST['no-of-results'] ?? '';
               $resultNum = [
                 ' LIMIT 10' => '10',
                 ' LIMIT 25' => '25',
@@ -152,73 +179,111 @@ if (isset($_POST['delete'])) {
                         <p class="artist"><?= htmlspecialchars( ($row['genre'] ?? '') ? ucwords(explode(',', $row['genre'])[0]) : '' ) ?></p>
                         <p class="track-timestamp"><?= htmlspecialchars(date("M d y", strtotime($row['added_at']))) ?></p>
                     </div>
+                    <?php if($_SESSION['role'] == 'admin' || $row['user_id'] == $_SESSION['user_id']): ?>
                     <button type="button" class="delete-track-btn" data-row-id="<?= (int)$track_row_id ?>">Delete</button>
+                    <?php endif ?>
                 </li>
             <?php endwhile ?>
             </ul>
-            <br><br>
+            
+        <?php else: ?>
+            <ul>
+                <p>No songs.</p>
+            </ul>
+        <?php endif ?>
+        <?php if($_SESSION['role'] == 'admin' || $row['user_id'] == $_SESSION['user_id']): ?>
+        <br>
+        <a class="button" href="edit_playlist.php?id=<?= $id ?>">Edit Playlist</a>
+        <br><br>
             <h2>Add Songs: </h2>
             <form id="spotify-search-form">
                 <input id="spotify-search-input" name="q" type="search" placeholder="Search to add songs">
                 <button class="button" type="submit">Search</button>
             </form>
             
-            <div class="add-results">
-                <div id="spotify-results"></div>
-            </div>
-        <?php else: ?>
-            <ul>
-                <p>No songs.</p>
-            </ul>
-            <h2>Add Songs: </h2>
-
-            <form id="spotify-search-form">
-                <input id="spotify-search-input" name="q" type="search" placeholder="Search to add songs" />
-                <button class="button" type="submit">Search</button>
-            </form>
-            
-            <ul class="add-results">
-                <div id="spotify-results"></div>
-            </ul>
+        
+        
         <?php endif ?>
-        <form method="post"><input class="delete-button" type="submit" value="Delete Playlist" name="delete">
-            <a class="button" href="edit_playlist.php?id=<?= $id ?>">Edit</a>
-        </form>
+        <br><br>
+
+        <h2>Comments</h2>
 
         
-        <form method="post" action="process_comment.php">
-            <textarea id="comment" maxlength="255" placeholder="Comment here..." rows="4" name="comment"></textarea>
-            <input type="submit" class="button">
+        <?php
+        $query = "SELECT * FROM comments WHERE playlist_id = :id ORDER BY timestamp DESC;";
+        $statement = $pdo->prepare($query);
+        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+        $statement->bindValue('id', $id, PDO::PARAM_INT);
+
+        $statement->execute();
+        ?>
+
+        <?php if($_SESSION['user_id'] != 'GUEST'): ?>
+        <form id="comment-form" method="post" action="process_comment.php">
+            <input type="hidden" id="playlist-id" name="playlist_id" value=<?= $id ?>>
+            <textarea style="max-width: 75vw; min-width: 75vw;" id="comment" maxlength="255" placeholder="Comment here..." rows="1" name="comment" required></textarea>
+            <input type="submit" class="button" value="Comment">
         </form>
+        <?php endif ?>
+        <br>
+
+        <?php
+        if($statement->rowCount() > 0): ?>
+            <ul id="comments">
+            <?php while($row = $statement->fetch()): ?>
+                <li class="comment">
+                    <div class="comment-info">
+                        <p class="comment-user"><strong><?= htmlspecialchars($row['username']) ?></strong> • <?= htmlspecialchars(date("M d y", strtotime($row['timestamp']))) ?></p>
+                        <p class="comment-content"><?= $row['content'] ?></p>
+                    </div>
+                    <?php if($_SESSION['role'] == 'admin' || $row['user_id'] == $_SESSION['user_id']): ?>
+                    <form method="post" action="process_comment.php" style="display:inline">
+                        <input type="hidden" name="comment_id" value="<?= intval($row['id']) ?>">
+                        <input type="hidden" name="playlist_id" value="<?= intval($_GET['id']) ?>">
+                        <button class="delete-comment-button" type="submit" name="delete">Delete</button>
+                    </form>
+                    <?php endif ?>
+                </li>
+            <?php endwhile ?>
+            </ul>
+            
+        <?php else: ?>
+            <ul>
+                <p>No comments on this playlist.</p>
+            </ul>
+        <?php endif ?>
+        <br><br>
 
         <script>
             (function(){
                 const form = document.getElementById('spotify-search-form');
                 const input = document.getElementById('spotify-search-input');
-                const resultsEl = document.getElementById('spotify-results');
 
                 window.spotifySearchResults = [];
 
-                form.addEventListener('submit', async function(e){
-                    e.preventDefault(); // stop normal navigation
-                    const q = input.value.trim();
-                    if (!q) return;
-                    resultsEl.textContent = 'Searching...';
+                // helper to create results container once
+                function ensureResultsContainer() {
+                    let container = document.querySelector('.add-results');
+                    if (!container) {
+                        container = document.createElement('div');
+                        container.className = 'add-results';
+                        const inner = document.createElement('div');
+                        inner.id = 'spotify-results';
+                        container.appendChild(inner);
+                        form.insertAdjacentElement('afterend', container);
+                    }
+                    return container.querySelector('#spotify-results');
+                }
 
-                    const resp = await fetch('spotify_search.php?q=' + encodeURIComponent(q) + '&limit=30', { credentials: 'same-origin' });
-                    // if spotify_search.php returns raw JSON array/object this will parse it
-                    const data = await resp.json();
-
-                    // store it in a global variable you can use elsewhere in this page
-                    window.spotifySearchResults = data;
-
-                    // simple render so you can see results (adjust as needed)
+                // render results and ensure click handler is attached once
+                function renderResults(data) {
+                    const resultsEl = ensureResultsContainer();
+                    resultsEl.innerHTML = '';
                     if (!Array.isArray(data) || data.length === 0) {
                         resultsEl.textContent = 'No results';
                         return;
                     }
 
-                    resultsEl.innerHTML = '';
                     data.forEach(track => {
                         const d = document.createElement('li');
                         d.className = 'track';
@@ -230,28 +295,66 @@ if (isset($_POST['delete'])) {
                                 <strong class="track-title">${escapeHtml(track.name)}</strong>
                                 <div class="artist">${escapeHtml((track.artists || []).join(', '))}</div>
                             </div>
-                            <button data-track-id="${escapeHtml(track.id)}" 
-                            class="add-track-btn" class="button">Add</button>
+                            <style>
+                                .add-track-btn {
+                                    display: inline-block;
+                                    border-radius: 16px;
+                                    text-decoration: none;
+                                    font-weight: bold;
+                                    margin-right: 8px;
+                                    transition: transform 0.07s ease-in-out, background-color 0.07s ease-in-out;
+                                    font-size: 0.95em;
+                                    padding: 6px 8px 6px 8px;
+                                    background-color: #313131;
+                                    border: 2px solid green;
+                                    color: white;
+                                }
+
+                                .add-track-btn:hover {
+                                    transform: scale(1.01);
+                                    background-color:green;
+                                    cursor: pointer;
+                                }
+                            </style>
+                            <button data-track-id="${escapeHtml(track.id)}" class="add-track-btn">Add</button>
                         `;
                         resultsEl.appendChild(d);
                     });
+
+                    // store globally for add handler lookup
+                    window.spotifySearchResults = data;
+                }
+
+                form.addEventListener('submit', async function(e){
+                    e.preventDefault();
+                    const q = input.value.trim();
+                    if (!q) return;
+                    const resultsEl = ensureResultsContainer();
+                    resultsEl.textContent = 'Searching...';
+
+                    try {
+                        const resp = await fetch('spotify_search.php?q=' + encodeURIComponent(q) + '&limit=30', { credentials: 'same-origin' });
+                        const data = await resp.json();
+                        renderResults(data);
+                    } catch (err) {
+                        console.error(err);
+                        const resultsEl = ensureResultsContainer();
+                        resultsEl.textContent = 'Search failed';
+                    }
                 });
 
-                // example: attach handler to "Add" buttons that reads window.spotifySearchResults if needed
-
-                resultsEl.addEventListener('click', async function(e){
+                // delegate Add button clicks from document (works even when container is created later)
+                document.addEventListener('click', async function(e){
                     const btn = e.target.closest('.add-track-btn');
                     if (!btn) return;
                     const spotifyId = btn.getAttribute('data-track-id');
                     if (!spotifyId) return;
 
-                    // find track object from the last search results
                     const track = (window.spotifySearchResults || []).find(t => t.id === spotifyId);
                     const title = track ? track.name : '';
                     const artist = track ? (Array.isArray(track.artists) ? track.artists.join(', ') : (track.artists || '')) : '';
                     const album_image = track ? (track.album_image || '') : '';
 
-                    // Disable UI while adding
                     btn.disabled = true;
                     const prevText = btn.textContent;
                     btn.textContent = 'Adding...';
@@ -285,7 +388,7 @@ if (isset($_POST['delete'])) {
                         alert('Network error');
                     }
                 });
-                
+
                 const playlistTracksEl = document.getElementById('playlist-tracks');
                 if (playlistTracksEl) {
                     playlistTracksEl.addEventListener('click', async function(e){
@@ -293,7 +396,6 @@ if (isset($_POST['delete'])) {
                         if (!btn) return;
                         const rowId = btn.dataset.rowId;
                         if (!rowId) return;
-                        if (!confirm('Delete this track?')) return;
 
                         btn.disabled = true;
                         const prevText = btn.textContent;
@@ -326,6 +428,7 @@ if (isset($_POST['delete'])) {
                 function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
             })();
         </script>
+        
     </main> 
 </body>
 </html>

@@ -20,16 +20,23 @@ if (!$id) {
 }
 
 $stmt = $pdo->prepare(
-    'SELECT p.user_id FROM playlist_tracks pt JOIN playlists p ON pt.playlist_id = p.id WHERE pt.id = ? LIMIT 1'
+    'SELECT p.user_id AS owner_id, pt.playlist_id AS playlist_id
+     FROM playlist_tracks pt
+     JOIN playlists p ON pt.playlist_id = p.id
+     WHERE pt.id = ? LIMIT 1'
 );
 $stmt->execute([$id]);
-$owner = $stmt->fetchColumn();
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$owner) {
+if (!$row) {
     http_response_code(404);
     echo json_encode(['error' => 'not_found']);
     exit;
 }
+
+$owner = $row['owner_id'];
+$playlistId = $row['playlist_id'];
+
 if ($owner != $_SESSION['user_id']) {
     http_response_code(403);
     echo json_encode(['error' => 'not_allowed']);
@@ -37,10 +44,19 @@ if ($owner != $_SESSION['user_id']) {
 }
 
 try {
+    $pdo->beginTransaction();
+
     $del = $pdo->prepare('DELETE FROM playlist_tracks WHERE id = ?');
     $del->execute([$id]);
+
+    $up = $pdo->prepare('UPDATE playlists SET updated_at = NOW() WHERE id = ?');
+    $up->execute([$playlistId]);
+
+    $pdo->commit();
+
     echo json_encode(['ok' => true]);
 } catch (\PDOException $e) {
+    if ($pdo->inTransaction()) $pdo->rollBack();
     http_response_code(500);
     echo json_encode(['error' => 'db_error', 'msg' => $e->getMessage()]);
 }

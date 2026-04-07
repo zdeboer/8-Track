@@ -75,6 +75,8 @@ if (isset($_POST['delete'])) {
     <?php endif ?>
 
     <?php
+    $username = $row['username'];
+
     $query = "SELECT * FROM playlists WHERE user_id = :user_id";
     $statement = $pdo->prepare($query);
     $statement->bindValue(':user_id', $row['id'], PDO::PARAM_INT);
@@ -99,6 +101,43 @@ if (isset($_POST['delete'])) {
         <?php else: ?>
             <ul>
                 <p>No playlists.</p>
+            </ul>
+        <?php endif ?>
+        <br><br>
+        <h2>Comments by <?= $username ?></h2>
+        <?php
+        $query = "SELECT * FROM comments WHERE user_id = :id ORDER BY timestamp DESC;";
+        $statement = $pdo->prepare($query);
+        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+        $statement->bindValue('id', $id, PDO::PARAM_INT);
+
+        $statement->execute();
+        ?>
+
+        <?php
+        if($statement->rowCount() > 0): ?>
+            <ul id="comments">
+            <?php while($row = $statement->fetch()): ?>
+                <li class="comment">
+                    <div class="comment-info">
+                        <p style="display: inline; float: left;" class="comment-user"><strong><?= htmlspecialchars($row['username']) ?></strong> • <?= htmlspecialchars(date("M d y", strtotime($row['timestamp'])))?>  
+                        </p>
+                        <form method="post" action="process_comment.php" style="display:inline; float:right; margin: 0;">
+                                <input type="hidden" name="comment_id" value="<?= intval($row['id']) ?>">
+                                <input type="hidden" name="playlist_id" value="<?= intval($_GET['id']) ?>">
+                                <button style="margin: 0;" class="delete-comment-button" type="submit" name="delete">Delete</button>
+                            </form>
+                            <br>
+                        <p class="comment-content"><?= $row['content'] ?></p>
+                    </div>
+                    
+                </li>
+            <?php endwhile ?>
+            </ul>
+            
+        <?php else: ?>
+            <ul>
+                <p>This user has posted no comments.</p>
             </ul>
         <?php endif ?>
 </body>

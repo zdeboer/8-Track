@@ -4,7 +4,7 @@ require 'connect.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
-    $password = $_POST['password'];
+    $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_SPECIAL_CHARS);
 
     try {
         $stmt = $pdo->prepare("SELECT id, username, password, role FROM users WHERE username = ?");

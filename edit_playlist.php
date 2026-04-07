@@ -168,7 +168,7 @@ if (isset($_POST['delete'])) {
         <?php endif ?>
 
         <?php if (!empty($error)): ?>
-            <p class="error"><?= htmlspecialchars($error) ?></p>
+            <p style="color: red;" class="error"><?= htmlspecialchars($error) ?></p>
         <?php endif ?>
         
         <input class="button" type="submit" name="submit" value="submit">
